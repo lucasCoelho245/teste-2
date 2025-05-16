@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDefaultStaticWebAssets>false</EnableDefaultStaticWebAssets>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-Pay.Recorrencia.Gestao.Consumer.Worker-465c1637-bfc4-4b67-a2a6-fe58c700388f</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\arq\Pay.Recorrencia.Gestao.Consumer\Pay.Recorrencia.Gestao.Consumer.csproj" />
+    <ProjectReference Include="..\Pay.Recorrencia.Gestao.Application\Pay.Recorrencia.Gestao.Application.csproj" />
+  </ItemGroup>
+</Project>

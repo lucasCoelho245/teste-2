@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableDefaultStaticWebAssets>false</EnableDefaultStaticWebAssets>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+
+    <PackageReference Include="DataAccess" Version="3.0.1" />
+
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\arq\Pay.Recorrencia.Gestao.Consumer\Pay.Recorrencia.Gestao.Consumer.csproj" />
+    <ProjectReference Include="..\..\arq\Pay.Recorrencia.Gestao.Producer\Pay.Recorrencia.Gestao.Producer.csproj" />
+    <ProjectReference Include="..\Pay.Recorrencia.Gestao.Domain\Pay.Recorrencia.Gestao.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
