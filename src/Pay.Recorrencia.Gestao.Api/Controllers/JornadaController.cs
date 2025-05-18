@@ -1,52 +1,51 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Pay.Recorrencia.Gestao.Application.Services;
 
-namespace Pay.Recorrencia.Gestao.Api.Controllers
+namespace Pay.Recorrencia.Gestao.Api.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class JornadaController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class JornadaController : ControllerBase
+    private readonly IJornadaService _service;
+    public JornadaController(IJornadaService service) => _service = service;
+
+    [HttpGet]
+    public async Task<IActionResult> Get()
+        => Ok(await _service.GetAllAsync());
+
+    [HttpGet("filtro")]
+    public async Task<IActionResult> GetByRecorrencia(
+        [FromQuery] string tpJornada,
+        [FromQuery] string idRecorrencia)
     {
-        private readonly JornadaService _service;
-        public JornadaController(JornadaService service)
-            => _service = service;
+        if (string.IsNullOrEmpty(tpJornada) || string.IsNullOrEmpty(idRecorrencia))
+            return BadRequest(new { tpJornada = "required", idRecorrencia = "required" });
 
-        // Cenário 01 & 03.2: retorna todas as jornadas
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
-            => Ok(await _service.GetAllAsync());
+        var dto = await _service.GetByJornadaERecorrenciaAsync(tpJornada, idRecorrencia);
+        return Ok(dto);
+    }
 
-        // Cenário 02.1 & 03.1: filtra por tpJornada + idRecorrencia
-        [HttpGet("filtro")]
-        public async Task<IActionResult> GetByJornadaERecorrencia(
-            [FromQuery] string tpJornada,
-            [FromQuery] string idRecorrencia)
-        {
-            var dto = await _service.GetByJornadaERecorrenciaAsync(tpJornada, idRecorrencia);
-            if (dto == null) return NotFound();
-            return Ok(dto);
-        }
+    [HttpGet("filtro-agendamento")]
+    public async Task<IActionResult> GetByAgendamento(
+        [FromQuery] string tpJornada,
+        [FromQuery] string idE2E)
+    {
+        if (string.IsNullOrEmpty(tpJornada) || string.IsNullOrEmpty(idE2E))
+            return BadRequest(new { tpJornada = "required", idE2E = "required" });
 
-        // Cenário 02.2 & 03.1: filtra por tpJornada + idE2E
-        [HttpGet("filtro-agendamento")]
-        public async Task<IActionResult> GetByJornadaE2E(
-            [FromQuery] string tpJornada,
-            [FromQuery] string idE2E)
-        {
-            var dto = await _service.GetByJornadaE2EAsync(tpJornada, idE2E);
-            if (dto == null) return NotFound();
-            return Ok(dto);
-        }
+        var dto = await _service.GetByJornadaE2EAsync(tpJornada, idE2E);
+        return Ok(dto);
+    }
 
-        // Cenário 02.3 & 03.2: demais combinações
-        [HttpGet("filtros")]
-        public async Task<IActionResult> GetByAny(
-            [FromQuery] string tpJornada = null,
-            [FromQuery] string idRecorrencia = null,
-            [FromQuery] string idE2E = null,
-            [FromQuery] string idConciliacaoRecebedor = null)
-            => Ok(await _service.GetByAnyFilterAsync(
-                tpJornada, idRecorrencia, idE2E, idConciliacaoRecebedor));
+    [HttpGet("filtros")]
+    public async Task<IActionResult> GetByFiltros(
+        [FromQuery] string tpJornada,
+        [FromQuery] string idRecorrencia,
+        [FromQuery] string idE2E,
+        [FromQuery] string idConciliacaoRecebedor)
+    {
+        var list = await _service.GetByAnyFilterAsync(tpJornada, idRecorrencia, idE2E, idConciliacaoRecebedor);
+        return Ok(list);
     }
 }

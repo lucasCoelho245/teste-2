@@ -3,12 +3,17 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Versioning;
+using Microsoft.Data.SqlClient;
 using Microsoft.OpenApi.Models;
 using Pay.Recorrencia.Gestao.Application.Commands.SolicitacaoRecorrencia;
 using Pay.Recorrencia.Gestao.Application.Response;
+using Pay.Recorrencia.Gestao.Application.Services;
 using Pay.Recorrencia.Gestao.Crosscutting.Extensions;
 using Pay.Recorrencia.Gestao.Domain.DTO;
 using Pay.Recorrencia.Gestao.Domain.Entities;
+using Pay.Recorrencia.Gestao.Domain.Repositories;
+using Pay.Recorrencia.Gestao.Infrastructure.Repositories;
+using System.Data;
 using System.Text;
 using System.Text.Json;
 
@@ -18,7 +23,7 @@ public partial class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Configurar servi�os
+        // Configurar serviços
         ConfigureServices(builder.Services, builder.Configuration);
 
         var app = builder.Build();
@@ -30,7 +35,7 @@ public partial class Program
     }
 
     /// <summary>
-    /// Configura os servi�os da aplica��o.
+    /// Configura os serviços da aplicação.
     /// </summary>
     private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
@@ -49,84 +54,75 @@ public partial class Program
         services.AddEndpointsApiExplorer();
         services.AddHealthChecksInjection();
 
-        // Servi�os customizados
+        // Serviços customizados
         services.AddMediator();
         services.AddRepository(configuration);
         services.AddApiVersioning(options =>
-            {
-                options.ReportApiVersions = true;
-                options.AssumeDefaultVersionWhenUnspecified = true;
-                options.DefaultApiVersion = new ApiVersion(1, 0);
-                options.ApiVersionReader = new UrlSegmentApiVersionReader();
-            });
+        {
+            options.ReportApiVersions = true;
+            options.AssumeDefaultVersionWhenUnspecified = true;
+            options.DefaultApiVersion = new ApiVersion(1, 0);
+            options.ApiVersionReader = new UrlSegmentApiVersionReader();
+        });
         services.AddVersionedApiExplorer(options =>
         {
             options.GroupNameFormat = "'v'VVV";
             options.SubstituteApiVersionInUrl = true;
         });
         services.AddSwaggerGen(c =>
+        {
+            c.SwaggerDoc("v1", new OpenApiInfo
             {
-                c.SwaggerDoc("v1", new OpenApiInfo
-                {
-                    Version = "v1",
-                    Title = "Pix Recorrente Gestao",
-                    Description = "Api para tratamento do pix automático"
-
-                });
+                Version = "v1",
+                Title = "Pix Recorrente Gestao",
+                Description = "Api para tratamento do pix automático"
             });
+        });
         services.AddApiCustomSettings(configuration);
         services.AddApiCustomServices(configuration);
+
+        // --- Início das minhas adições ---
+        // 1) Registrar IDbConnection para Dapper/SQL Server
+        services.AddTransient<IDbConnection>(sp =>
+            new SqlConnection(configuration.GetConnectionString("DefaultConnection")));
+
+        // 2) Registrar repositório de Jornada
+        services.AddTransient<IJornadaRepository, JornadaRepository>();
+
+        // 3) Registrar serviço de Jornada via interface
+        services.AddScoped<IJornadaService, JornadaService>();
+        // --- Fim das minhas adições ---
+
         /*
-        // Configura��o de valida��o de modelo
+        // Configuração de validação de modelo
         services.Configure<ApiBehaviorOptions>(options =>
         {
-            options.InvalidModelStateResponseFactory = context =>
-            {
-                var errors = context.ModelState
-                    .Where(x => x.Value?.Errors?.Count > 0)
-                    .Select(x => new
-                    {
-                        Field = x.Key,
-                        Errors = x.Value?.Errors.Select(e => e.ErrorMessage)
-                    });
-
-                var response = new MensagemPadraoResponse
-                {
-                    CodigoRetorno = "ERRO-PIXAUTO-002",
-                    MensagemErro = "Campos não preenchidos corretamente"
-                };
-
-                return new BadRequestObjectResult(new
-                {
-                    response.CodigoRetorno,
-                    response.MensagemErro
-                });
-            };
+            // ...
         });
         */
     }
 
     /// <summary>
-    /// Configura o pipeline de middleware da aplica��o.
+    /// Configura o pipeline de middleware da aplicação.
     /// </summary>
     private static void ConfigureMiddleware(WebApplication app)
     {
-        // Configura��o do Swagger
+        // Configuração do Swagger
         if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Homolog"))
         {
             app.UseSwagger();
             app.UseSwaggerUI(options =>
+            {
+                var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+                foreach (var description in provider.ApiVersionDescriptions)
                 {
-                    var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
-                    foreach (var description in provider.ApiVersionDescriptions)
-                    {
-                        options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
-                    }
-                    options.RoutePrefix = "swagger";
-                });
+                    options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
+                }
+                options.RoutePrefix = "swagger";
+            });
         }
 
-        // Middlewares padr�o
+        // Middlewares padrão
         app.UseHttpsRedirection();
         app.UseAuthorization();
 
