@@ -1,122 +1,181 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Moq;
-using Pay.Recorrencia.Gestao.Api.Controllers;
-using Pay.Recorrencia.Gestao.Application.Services;
-using Pay.Recorrencia.Gestao.Domain.DTO;
 using Xunit;
+using Pay.Recorrencia.Gestao.Application.Services;
+using Pay.Recorrencia.Gestao.Domain.Entities;
+using Pay.Recorrencia.Gestao.Domain.DTO;
+using Pay.Recorrencia.Gestao.Domain.Repositories;
 
-namespace Pay.Recorrencia.Gestao.Test;
-
-public class JornadaControllerTests
+namespace Pay.Recorrencia.Gestao.Test
 {
-    private readonly Mock<IJornadaService> _serviceMock;
-    private readonly JornadaController _controller;
-
-    public JornadaControllerTests()
+    public class JornadaServiceTests
     {
-        _serviceMock = new Mock<IJornadaService>();
-        _controller = new JornadaController(_serviceMock.Object);
-    }
+        private readonly Mock<IJornadaRepository> _repoMock;
+        private readonly JornadaService _service;
 
-    [Fact]
-    public async Task Get_AllJornadas_ReturnsOkWithList()
-    {
-        var lista = new List<JornadaDto>
+        public JornadaServiceTests()
         {
-            new() { TpJornada="J1", IdRecorrencia="R1" },
-            new() { TpJornada="J2", IdRecorrencia="R2" }
-        };
-        _serviceMock.Setup(s => s.GetAllAsync()).ReturnsAsync(lista);
+            _repoMock = new Mock<IJornadaRepository>();
+            _service = new JornadaService(_repoMock.Object);
+        }
 
-        var result = await _controller.Get();
-
-        var ok = Assert.IsType<OkObjectResult>(result);
-        Assert.Equal(StatusCodes.Status200OK, ok.StatusCode);
-        Assert.Equal(lista, ok.Value);
-    }
-
-    [Fact]
-    public async Task GetByRecorrencia_MissingParams_ReturnsBadRequest()
-    {
-        _controller.ModelState.AddModelError("tpJornada", "required");
-        _controller.ModelState.AddModelError("idRecorrencia", "required");
-
-        var result = await _controller.GetByRecorrencia(null, null);
-
-        var bad = Assert.IsType<BadRequestObjectResult>(result);
-        Assert.Equal(StatusCodes.Status400BadRequest, bad.StatusCode);
-    }
-
-    [Fact]
-    public async Task GetByRecorrencia_ValidParams_ReturnsOkWithDto()
-    {
-        var dto = new JornadaDto
+        [Fact]
+        public async Task GetAllAsync_ShouldMapAllFields()
         {
-            TpJornada = "J1",
-            IdRecorrencia = "R1",
-            IdE2E = "E1",
-            IdConciliacaoRecebedor = "C1",
-            SituacaoJornada = "Ativa",
-            DtAgendamento = DateTime.Parse("2025-05-13T10:00:00"),
-            VlAgendamento = 100.5m,
-            DtPagamento = DateTime.Parse("2025-05-14T10:00:00"),
-            DataHoraCriacao = DateTime.Parse("2025-05-05T10:00:00"),
-            DataUltimaAtualizacao = DateTime.Parse("2025-05-15T10:00:00")
-        };
-        _serviceMock
-            .Setup(s => s.GetByJornadaERecorrenciaAsync("J1", "R1"))
-            .ReturnsAsync(dto);
+            // Arrange
+            var entity = new Jornada
+            {
+                Id = 1,  // <-- aqui era string no seu teste, mas é int no domínio
+                TpJornada = "JornadaX",
+                IdRecorrencia = "Rec123",
+                IdE2E = "E2E456",
+                IdConciliacaoRecebedor = "Conc789",
+                SituacaoJornada = "Ativa",
+                DtAgendamento = DateTime.Parse("2025-05-17T08:00:00"),
+                VlAgendamento = 100.5m,
+                DtPagamento = DateTime.Parse("2025-05-18T09:00:00"),
+                DataHoraCriacao = DateTime.Parse("2025-05-15T10:00:00"),
+                DataUltimaAtualizacao = DateTime.Parse("2025-05-16T11:00:00")
+            };
+            _repoMock
+                .Setup(r => r.GetAllAsync())
+                .ReturnsAsync(new[] { entity });
 
-        var result = await _controller.GetByRecorrencia("J1", "R1");
+            // Act
+            var dtos = (await _service.GetAllAsync()).ToList();
 
-        var ok = Assert.IsType<OkObjectResult>(result);
-        Assert.Equal(dto, ok.Value);
-    }
+            // Assert
+            Assert.Single(dtos);
+            var dto = dtos[0];
+            Assert.Equal(entity.Id, dto.Id);
+            Assert.Equal(entity.TpJornada, dto.TpJornada);
+            Assert.Equal(entity.IdRecorrencia, dto.IdRecorrencia);
+            Assert.Equal(entity.IdE2E, dto.IdE2E);
+            Assert.Equal(entity.IdConciliacaoRecebedor, dto.IdConciliacaoRecebedor);
+            Assert.Equal(entity.SituacaoJornada, dto.SituacaoJornada);
+            Assert.Equal(entity.DtAgendamento, dto.DtAgendamento);
+            Assert.Equal(entity.VlAgendamento, dto.VlAgendamento);
+            Assert.Equal(entity.DtPagamento, dto.DtPagamento);
+            Assert.Equal(entity.DataHoraCriacao, dto.DataHoraCriacao);
+            Assert.Equal(entity.DataUltimaAtualizacao, dto.DataUltimaAtualizacao);
+        }
 
-    [Fact]
-    public async Task GetByAgendamento_MissingParams_ReturnsBadRequest()
-    {
-        _controller.ModelState.AddModelError("tpJornada", "required");
-        _controller.ModelState.AddModelError("idE2E", "required");
-
-        var result = await _controller.GetByAgendamento(null, null);
-
-        var bad = Assert.IsType<BadRequestObjectResult>(result);
-        Assert.Equal(StatusCodes.Status400BadRequest, bad.StatusCode);
-    }
-
-    [Fact]
-    public async Task GetByAgendamento_ValidParams_ReturnsOkWithDto()
-    {
-        var dto = new JornadaDto { TpJornada="AGND", IdE2E="E1" };
-        _serviceMock
-            .Setup(s => s.GetByJornadaE2EAsync("AGND", "E1"))
-            .ReturnsAsync(dto);
-
-        var result = await _controller.GetByAgendamento("AGND", "E1");
-
-        var ok = Assert.IsType<OkObjectResult>(result);
-        Assert.Equal(dto, ok.Value);
-    }
-
-    [Fact]
-    public async Task GetByFiltros_AllOptional_ReturnsOkWithList()
-    {
-        var lista = new List<JornadaDto>
+        [Fact]
+        public async Task GetByJornadaERecorrenciaAsync_Existing_ReturnsDto()
         {
-            new() { TpJornada="X", IdRecorrencia="Y" }
-        };
-        _serviceMock
-            .Setup(s => s.GetByAnyFilterAsync(null, null, null, null))
-            .ReturnsAsync(lista);
+            // Arrange
+            var entity = new Jornada
+            {
+                Id = 42,
+                TpJornada = "J1",
+                IdRecorrencia = "R1"
+            };
+            _repoMock
+                .Setup(r => r.GetByTpJornadaAndIdRecorrenciaAsync("J1", "R1"))
+                .ReturnsAsync(entity);
 
-        var result = await _controller.GetByFiltros(null, null, null, null);
+            // Act
+            var dto = await _service.GetByJornadaERecorrenciaAsync("J1", "R1");
 
-        var ok = Assert.IsType<OkObjectResult>(result);
-        Assert.Equal(lista, ok.Value);
+            // Assert
+            Assert.NotNull(dto);
+            Assert.Equal(entity.Id, dto.Id);
+            Assert.Equal(entity.TpJornada, dto.TpJornada);
+            Assert.Equal(entity.IdRecorrencia, dto.IdRecorrencia);
+        }
+
+        [Fact]
+        public async Task GetByJornadaERecorrenciaAsync_NotExisting_ReturnsNull()
+        {
+            // Arrange
+            _repoMock
+                .Setup(r => r.GetByTpJornadaAndIdRecorrenciaAsync("J1", "R1"))
+                .ReturnsAsync((Jornada)null);
+
+            // Act
+            var dto = await _service.GetByJornadaERecorrenciaAsync("J1", "R1");
+
+            // Assert
+            Assert.Null(dto);
+        }
+
+        [Fact]
+        public async Task GetByJornadaE2EAsync_Existing_ReturnsDto()
+        {
+            // Arrange
+            var entity = new Jornada
+            {
+                Id = 99,
+                TpJornada = "AGND",
+                IdE2E = "E999"
+            };
+            _repoMock
+                .Setup(r => r.GetByTpJornadaAndIdE2EAsync("AGND", "E999"))
+                .ReturnsAsync(entity);
+
+            // Act
+            var dto = await _service.GetByJornadaE2EAsync("AGND", "E999");
+
+            // Assert
+            Assert.NotNull(dto);
+            Assert.Equal(entity.Id, dto.Id);
+            Assert.Equal(entity.TpJornada, dto.TpJornada);
+            Assert.Equal(entity.IdE2E, dto.IdE2E);
+        }
+
+        [Fact]
+        public async Task GetByJornadaE2EAsync_NotExisting_ReturnsNull()
+        {
+            // Arrange
+            _repoMock
+                .Setup(r => r.GetByTpJornadaAndIdE2EAsync("AGND", "E999"))
+                .ReturnsAsync((Jornada)null);
+
+            // Act
+            var dto = await _service.GetByJornadaE2EAsync("AGND", "E999");
+
+            // Assert
+            Assert.Null(dto);
+        }
+
+        [Fact]
+        public async Task GetByAnyFilterAsync_WithResults_ReturnsList()
+        {
+            // Arrange
+            var entity = new Jornada
+            {
+                Id = 7,
+                TpJornada = "XYZ"
+            };
+            _repoMock
+                .Setup(r => r.GetByAnyFilterAsync("XYZ", "R2", "E3", "C4"))
+                .ReturnsAsync(new[] { entity });
+
+            // Act
+            var dtos = (await _service.GetByAnyFilterAsync("XYZ", "R2", "E3", "C4")).ToList();
+
+            // Assert
+            Assert.Single(dtos);
+            Assert.Equal(entity.Id, dtos[0].Id);
+            Assert.Equal(entity.TpJornada, dtos[0].TpJornada);
+        }
+
+        [Fact]
+        public async Task GetByAnyFilterAsync_NoResults_ReturnsEmptyList()
+        {
+            // Arrange
+            _repoMock
+                .Setup(r => r.GetByAnyFilterAsync("XYZ", "R2", "E3", "C4"))
+                .ReturnsAsync(Array.Empty<Jornada>());
+
+            // Act
+            var dtos = (await _service.GetByAnyFilterAsync("XYZ", "R2", "E3", "C4")).ToList();
+
+            // Assert
+            Assert.Empty(dtos);
+        }
     }
 }
