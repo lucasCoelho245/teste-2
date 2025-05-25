@@ -9,6 +9,11 @@ namespace Pay.Recorrencia.Gestao.Domain.Repositories
         Task Insert(SolicitacaoRecorrencia solicitacaoRecorrencia);
         Task Update(SolicitacaoAutorizacaoRecorrenciaUpdateDTO solicitacaoRecorrencia);
         Task<ListaSolicAutorizacaoRecPaginada> GetAllAsync(GetListaSolicAutorizacaoRecDTOPaginada data);
-        Task<SolicAutorizacaoRecPagination> GetAsync(GetSolicAutorizacaoRecDTOPaginada data);
+        Task<SolicitacaoRecorrencia> GetById(string id);
+        string ConsultarCodMunIBGE();
+        Task<SolicitacaoRecorrencia> InsertSolicitacaoRecorrencia(SolicitacaoRecorrencia solicitacaoRecorrencia);
+        Task<bool> ExistsByIdAsync(string id);
+        Task InsertAsync(SolicitacaoRecorrencia solicitacaoRecorrencia);
+        Task<SolicAutorizacaoRecNonPagination> GetAsync(GetSolicAutorizacaoRecDTOPaginada data);
     }
 }

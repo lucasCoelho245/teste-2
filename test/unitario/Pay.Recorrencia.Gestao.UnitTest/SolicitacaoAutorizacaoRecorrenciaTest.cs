@@ -11,12 +11,12 @@ namespace Pay.Recorrencia.Gestao.Test
     public class SolicitacaoRecorrenciaControllerTests
     {
         private readonly Mock<IMediator> _mediatorMock;
-        private readonly SolicitacaoRecorrenciaController _controller;
+        private readonly SolicitacaoAutorizacaoRecorrenciaController _controller;
 
         public SolicitacaoRecorrenciaControllerTests()
         {
             _mediatorMock = new Mock<IMediator>();
-            _controller = new SolicitacaoRecorrenciaController(_mediatorMock.Object);
+            _controller = new SolicitacaoAutorizacaoRecorrenciaController(_mediatorMock.Object);
         }
 
         [Fact]
@@ -43,11 +43,7 @@ namespace Pay.Recorrencia.Gestao.Test
                 DataUltimaAtualizacao = DateTime.Now
             };
 
-            var response = new MensagemPadraoResponse
-            {
-                CodigoRetorno = "200",
-                MensagemErro = string.Empty
-            };
+            var response = new MensagemPadraoResponse(200, "200", string.Empty);
 
             _mediatorMock.Setup(m => m.Send(request, default)).ReturnsAsync(response);
 
@@ -76,8 +72,8 @@ namespace Pay.Recorrencia.Gestao.Test
             Assert.Equal(StatusCodes.Status400BadRequest, badRequestResult.StatusCode);
 
             var response = Assert.IsType<MensagemPadraoResponse>(badRequestResult.Value);
-            Assert.Equal("400", response.CodigoRetorno);
-            Assert.Equal("Erro de validação nos dados fornecidos.", response.MensagemErro);
+            Assert.Equal(StatusCodes.Status400BadRequest, response.StatusCode);
+            Assert.Equal("Erro de validação nos dados fornecidos.", response.Error.Message);
         }
 
         [Fact]
@@ -104,7 +100,7 @@ namespace Pay.Recorrencia.Gestao.Test
                 DataUltimaAtualizacao = DateTime.Now
             };
 
-            _mediatorMock.Setup(m => m.Send(request, default)).ThrowsAsync(new Exception("Internal Server Error"));
+            _mediatorMock.Setup(m => m.Send(request, default)).ThrowsAsync(new Exception("Erro interno no servidor."));
 
             // Act
             var result = await _controller.CriarSolicitacaoRecorrenciaAsync(request);
@@ -114,8 +110,8 @@ namespace Pay.Recorrencia.Gestao.Test
             Assert.Equal(StatusCodes.Status500InternalServerError, objectResult.StatusCode);
 
             var response = Assert.IsType<MensagemPadraoResponse>(objectResult.Value);
-            Assert.Equal("500", response.CodigoRetorno);
-            Assert.Equal("Erro interno no servidor.", response.MensagemErro);
+            Assert.Equal(StatusCodes.Status500InternalServerError, response.StatusCode);
+            Assert.Equal("Erro interno no servidor.", response.Error.Message);
         }
 
         [Fact]
@@ -131,11 +127,7 @@ namespace Pay.Recorrencia.Gestao.Test
                 DataUltimaAtualizacao = DateTime.Now
             };
 
-            var response = new MensagemPadraoResponse
-            {
-                CodigoRetorno = "200",
-                MensagemErro = string.Empty
-            };
+            var response = new MensagemPadraoResponse(StatusCodes.Status200OK, StatusCodes.Status200OK.ToString(), string.Empty);
 
             _mediatorMock.Setup(m => m.Send(request, default)).ReturnsAsync(response);
 
@@ -161,7 +153,7 @@ namespace Pay.Recorrencia.Gestao.Test
                 DataUltimaAtualizacao = DateTime.Now
             };
 
-            var response = new MensagemPadraoResponse() { CodigoRetorno = "ERRO-PIXAUTO-005", MensagemErro = "Solicitação não encontrada." };
+            var response = new MensagemPadraoResponse(StatusCodes.Status404NotFound, "ERRO-PIXAUTO-005", "Solicitação não encontrada.");
 
             _mediatorMock.Setup(m => m.Send(request, default)).ReturnsAsync(response);
 
@@ -172,8 +164,8 @@ namespace Pay.Recorrencia.Gestao.Test
             var notFoundResult = Assert.IsType<ObjectResult>(result);
 
             Assert.Equal(StatusCodes.Status404NotFound, notFoundResult.StatusCode);
-            Assert.Equal("ERRO-PIXAUTO-005", response.CodigoRetorno);
-            Assert.Equal("Solicitação não encontrada.", response.MensagemErro);
+            Assert.Equal("ERRO-PIXAUTO-005", response.Error.Code);
+            Assert.Equal("Solicitação não encontrada.", response.Error.Message);
         }
 
         [Fact]
@@ -189,7 +181,7 @@ namespace Pay.Recorrencia.Gestao.Test
                 DataUltimaAtualizacao = DateTime.Now
             };
 
-            _mediatorMock.Setup(m => m.Send(request, default)).ThrowsAsync(new Exception("Internal Server Error"));
+            _mediatorMock.Setup(m => m.Send(request, default)).ThrowsAsync(new Exception("Erro interno no servidor."));
 
             // Act
             var result = await _controller.AtualizarSolicitacaoRecorrenciaAsync(idSolicRecorrencia, request);
@@ -199,8 +191,8 @@ namespace Pay.Recorrencia.Gestao.Test
             Assert.Equal(StatusCodes.Status500InternalServerError, objectResult.StatusCode);
 
             var response = Assert.IsType<MensagemPadraoResponse>(objectResult.Value);
-            Assert.Equal("500", response.CodigoRetorno);
-            Assert.Equal("Erro interno no servidor.", response.MensagemErro);
+            Assert.Equal(StatusCodes.Status500InternalServerError, response.StatusCode);
+            Assert.Equal("Erro interno no servidor.", response.Error.Message);
         }
     }
 }

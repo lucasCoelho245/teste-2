@@ -26,6 +26,12 @@
         /// Security Parameters that will be used by the Producer
         /// </summary>
         public InputSecurityParametersKafka? SecurityParameters { get; set; }
+        
+        
+        
+        public string? TopicControleJornada { get; set; }
+    
+    
     }
 
     public class InputParameterskafkaProducer
@@ -49,7 +55,12 @@
         /// Name of the Application that is using the library
         /// </summary>
         public required string ApplicationName { get; set; }
-
+        
+        
+        
+        public string? TopicControleJornada { get; set; }
+    
+    
     }
 
     public class InputSecurityParametersKafka

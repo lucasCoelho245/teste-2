@@ -203,27 +203,175 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
                 TotalItems = totalItems
             };
         }
-        public async Task<SolicAutorizacaoRecPagination> GetAsync(GetSolicAutorizacaoRecDTOPaginada data)
+        public async Task<SolicAutorizacaoRecNonPagination> GetAsync(GetSolicAutorizacaoRecDTOPaginada data)
         {
-            string sqlCount = $"SELECT COUNT(*) " +
-                                        "FROM [dbo].[SOLICITACAO_AUTORIZACAO_RECORRENCIA] " +
-                                        "WHERE idSolicRecorrencia = @IdSolicRecorrencia";
-
             string sqlQuery = $"SELECT * FROM [dbo].[SOLICITACAO_AUTORIZACAO_RECORRENCIA] " +
                             "WHERE idSolicRecorrencia = @IdSolicRecorrencia";
 
-            int offset = (data.Page - 1) * data.PageSize;
-
-            sqlQuery += $" ORDER BY dataHoraCriacaoSolicRecorr OFFSET {offset} ROWS FETCH NEXT @PageSize ROWS ONLY";
-
-            int totalItems = await _dbContext.ExecuteScalarAsync(sqlCount, data);
-
             var items = await _dbContext.QueryAsync<SolicitacaoRecorrencia>(sqlQuery, data);
 
-            return new SolicAutorizacaoRecPagination()
+            return new SolicAutorizacaoRecNonPagination()
             {
-                Items = items,
-                TotalItems = totalItems
+                Data = items.First()            };
+        }
+
+        public async Task<SolicitacaoRecorrencia> GetById(string id)
+        {
+            using var session = _dataAccess.CreateSession();
+            try
+            {
+                //id = "e962da16-87d1-489d-9159-d827f02240b3";
+                string query = "SELECT * FROM [dbo].[SOLICITACAO_AUTORIZACAO_RECORRENCIA] WHERE idSolicRecorrencia = @Id";
+                var count = await _dbContext.QueryAsync<SolicitacaoRecorrencia>(query, new { Id = id });
+                return count.FirstOrDefault();
+            }
+            catch
+            {
+                session.Rollback();
+                throw;
+            }
+        }
+
+        public string ConsultarCodMunIBGE()
+        {
+            return "3550308";
+        }
+
+        public Task<SolicitacaoRecorrencia> InsertSolicitacaoRecorrencia(SolicitacaoRecorrencia solicitacaoRecorrencia)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<bool> ExistsByIdAsync(string id)
+        {
+            using var session = _dataAccess.CreateSession();
+            try
+            {
+                string query = "SELECT COUNT(1) FROM [dbo].[SOLICITACAO_AUTORIZACAO_RECORRENCIA] WHERE idSolicRecorrencia = @Id";
+                var count = session.Query<int>(query, new { Id = id }).SingleOrDefault();
+                return count > 0;
+            }
+            catch
+            {
+                session.Rollback();
+                throw;
+            }
+        }
+
+        public async Task InsertAsync(SolicitacaoRecorrencia solicitacaoRecorrencia)
+        {
+            using var session = _dataAccess.CreateSession();
+            session.Begin();
+            try
+            {
+                //Logger.Information("Starting insert transaction");
+                string query = ObtemQueryInsert();
+                object param = ObterParametros(solicitacaoRecorrencia);
+
+                session.Execute(query, param);
+                session.Commit();
+
+                return;
+
+            }
+            catch (Exception)
+            {
+                session.Rollback();
+                //Logger.Information("Finish insert transaction - Error: @e.Message", e.Message);
+                throw;
+            }
+        }
+
+        private string ObtemQueryInsert()
+        {
+            return @" INSERT INTO [dbo].[SOLICITACAO_AUTORIZACAO_RECORRENCIA] ( idSolicRecorrencia
+                                                                               ,idAutorizacao
+                                                                               ,idRecorrencia
+                                                                               ,tipoRecorrencia
+                                                                               ,tipoFrequencia
+                                                                               ,dataInicialRecorrencia
+                                                                               ,dataFinalRecorrencia
+                                                                               ,situacaoSolicRecorrencia
+                                                                               ,codigoMoedaSolicRecorr
+                                                                               ,valorFixoSolicRecorrencia
+                                                                               ,indicadorValorMin
+                                                                               ,valorMinRecebedorSolicRecorr
+                                                                               ,nomeUsuarioRecebedor
+                                                                               ,cpfCnpjUsuarioRecebedor
+                                                                               ,participanteDoUsuarioRecebedor
+                                                                               ,cpfCnpjUsuarioPagador
+                                                                               ,contaUsuarioPagador
+                                                                               ,agenciaUsuarioPagador
+                                                                               ,nomeDevedor
+                                                                               ,cpfCnpjDevedor
+                                                                               ,numeroContrato
+                                                                               ,descObjetoContrato
+                                                                               ,dataHoraCriacaoRecorr
+                                                                               ,dataHoraCriacaoSolicRecorr
+                                                                               ,dataHoraExpiracaoSolicRecorr
+                                                                               ,dataUltimaAtualizacao
+                                                                                )
+                                                                         VALUES
+                                                                               (@idSolicRecorrencia
+                                                                               ,@idAutorizacao
+                                                                               ,@idRecorrencia
+                                                                               ,@tipoRecorrencia
+                                                                               ,@tipoFrequencia
+                                                                               ,@dataInicialRecorrencia
+                                                                               ,@dataFinalRecorrencia
+                                                                               ,@situacaoSolicRecorrencia
+                                                                               ,@codigoMoedaSolicRecorr
+                                                                               ,@valorFixoSolicRecorrencia
+                                                                               ,@indicadorValorMin
+                                                                               ,@valorMinRecebedorSolicRecorr
+                                                                               ,@nomeUsuarioRecebedor
+                                                                               ,@cpfCnpjUsuarioRecebedor
+                                                                               ,@participanteDoUsuarioRecebedor
+                                                                               ,@cpfCnpjUsuarioPagador
+                                                                               ,@contaUsuarioPagador
+                                                                               ,@agenciaUsuarioPagador
+                                                                               ,@nomeDevedor
+                                                                               ,@cpfCnpjDevedor
+                                                                               ,@numeroContrato
+                                                                               ,@descObjetoContrato
+                                                                               ,@dataHoraCriacaoRecorr
+                                                                               ,@dataHoraCriacaoSolicRecorr
+                                                                               ,@dataHoraExpiracaoSolicRecorr
+                                                                               ,@dataUltimaAtualizacao)";
+        }
+
+        private object ObterParametros(SolicitacaoRecorrencia solicitacaoRecorrencia)
+        {
+            return new
+            {
+                solicitacaoRecorrencia.IdSolicRecorrencia,
+                solicitacaoRecorrencia.IdAutorizacao,
+                solicitacaoRecorrencia.IdRecorrencia,
+                solicitacaoRecorrencia.TipoRecorrencia,
+                solicitacaoRecorrencia.TipoFrequencia,
+                solicitacaoRecorrencia.DataInicialRecorrencia,
+                solicitacaoRecorrencia.DataFinalRecorrencia,
+                solicitacaoRecorrencia.SituacaoSolicRecorrencia,
+                solicitacaoRecorrencia.CodigoMoedaSolicRecorr,
+
+                solicitacaoRecorrencia.ValorFixoSolicRecorrencia,
+                solicitacaoRecorrencia.IndicadorValorMin,
+
+                solicitacaoRecorrencia.ValorMinRecebedorSolicRecorr,
+                solicitacaoRecorrencia.NomeUsuarioRecebedor,
+                solicitacaoRecorrencia.CpfCnpjUsuarioRecebedor,
+                solicitacaoRecorrencia.ParticipanteDoUsuarioRecebedor,
+                solicitacaoRecorrencia.CpfCnpjUsuarioPagador,
+                solicitacaoRecorrencia.ContaUsuarioPagador,
+                solicitacaoRecorrencia.AgenciaUsuarioPagador,
+                solicitacaoRecorrencia.NomeDevedor,
+                solicitacaoRecorrencia.CpfCnpjDevedor,
+                solicitacaoRecorrencia.NumeroContrato,
+                solicitacaoRecorrencia.DescObjetoContrato,
+                solicitacaoRecorrencia.DataHoraCriacaoRecorr,
+                solicitacaoRecorrencia.DataHoraCriacaoSolicRecorr,
+                solicitacaoRecorrencia.DataHoraExpiracaoSolicRecorr,
+                solicitacaoRecorrencia.DataUltimaAtualizacao
             };
         }
     }

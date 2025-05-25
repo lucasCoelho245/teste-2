@@ -21,66 +21,85 @@ namespace Pay.Recorrencia.Gestao.Consumer.KafkaConsumer
         public IConsumer<Null, string> GetKafkaConsumer()
         {
             _logger.LogInformation("Creating Kafka consumer with default parameters.");
-            return GetKafkaConsumer(_inputParametersKafka.Consumer.ConsumedTopics, _inputParametersKafka.Consumer.GroupId, _inputParametersKafka.Consumer.EnableAutoCommit);
+            return GetKafkaConsumer(GetTopics(), _inputParametersKafka?.Consumer?.GroupId, _inputParametersKafka.Consumer.EnableAutoCommit);
         }
 
         public IConsumer<Null, string> GetKafkaConsumer(int startPartition, int endPartition)
         {
-            _logger.LogInformation("Creating Kafka consumer for partitions [{StartPartition} - {EndPartition}] on topic {Topic}.", startPartition, endPartition, _inputParametersKafka.Consumer.ConsumedTopics);
-            return GetKafkaConsumerByPartition(_inputParametersKafka.Consumer.ConsumedTopics, startPartition, endPartition);
+            _logger.LogInformation("Creating Kafka consumer for partitions [{StartPartition} - {EndPartition}] on topic {Topic}.", startPartition, endPartition, GetTopics());
+            return GetKafkaConsumerByPartition(GetTopics(), startPartition, endPartition);
         }
 
         public IConsumer<Null, string> GetKafkaConsumer(int[] partitions)
         {
-            _logger.LogInformation("Creating Kafka consumer for partitions [{Partitions}] on topic {Topic}.", string.Join(", ", partitions), _inputParametersKafka.Consumer.ConsumedTopics);
-            return GetKafkaConsumerByPartition(_inputParametersKafka.Consumer.ConsumedTopics, partitions);
+            _logger.LogInformation("Creating Kafka consumer for partitions [{Partitions}] on topic {Topic}.", string.Join(", ", partitions), GetTopics());
+            return GetKafkaConsumerByPartition(GetTopics(), partitions);
         }
 
         public IConsumer<Null, string> GetKafkaConsumer(string topicName)
         {
             _logger.LogInformation("Creating Kafka consumer for topic {TopicName} with default group ID and auto commit settings.", topicName);
-            return GetKafkaConsumer(topicName, _inputParametersKafka.Consumer.GroupId, _inputParametersKafka.Consumer.EnableAutoCommit);
+            return GetKafkaConsumer(new[] { topicName }, _inputParametersKafka.Consumer.GroupId, _inputParametersKafka.Consumer.EnableAutoCommit);
         }
 
         public IConsumer<Null, string> GetKafkaConsumer(string topicName, string groupId)
         {
             _logger.LogInformation("Creating Kafka consumer for topic {TopicName} with group ID {GroupId} and default auto commit settings.", topicName, groupId);
-            return GetKafkaConsumer(topicName, groupId, _inputParametersKafka.Consumer.EnableAutoCommit);
+            return GetKafkaConsumer(new[] { topicName }, groupId, _inputParametersKafka.Consumer.EnableAutoCommit);
         }
 
-        public IConsumer<Null, string> GetKafkaConsumer(string topicName, string groupId, bool enableAutoCommit)
+        public IConsumer<Null, string> GetKafkaConsumer(string[] topicNames, string groupId, bool enableAutoCommit)
         {
-            _logger.LogInformation("Creating Kafka consumer for topic {TopicName} with group ID {GroupId} and auto commit set to {EnableAutoCommit}.", topicName, groupId, enableAutoCommit);
-            if (!TopicExists(topicName))
+            _logger.LogInformation("Creating Kafka consumer for topics [{TopicNames}] with group ID {GroupId} and auto commit set to {EnableAutoCommit}.", string.Join(", ", topicNames), groupId, enableAutoCommit);
+            foreach (var topic in topicNames)
             {
-                throw new Exception($"Topic {topicName} does not exist.");
+                if (!TopicExists(topic))
+                {
+                    throw new Exception($"Topic {topic} does not exist.");
+                }
             }
             var consumer = GetConsumerBuilder();
-            var topics = TransformStringIntoConsumerTopicLists(topicName);
-            _logger.LogInformation("Subscribing to topics: {Topics}", string.Join(", ", topics));
-            consumer.Subscribe(topics);
+            _logger.LogInformation("Subscribing to topics: {Topics}", string.Join(", ", topicNames));
+            consumer.Subscribe(topicNames);
             return consumer;
         }
 
-        public IConsumer<Null, string> GetKafkaConsumerByPartition(string topicName, int startPartition, int endPartition)
+        public IConsumer<Null, string> GetKafkaConsumerByPartition(string[] topicNames, int startPartition, int endPartition)
         {
-            _logger.LogInformation("Creating Kafka consumer for topic {TopicName} and assigning partitions [{StartPartition} - {EndPartition}].", topicName, startPartition, endPartition);
+            _logger.LogInformation("Creating Kafka consumer for topics [{TopicNames}] and assigning partitions [{StartPartition} - {EndPartition}].",
+                string.Join(", ", topicNames), startPartition, endPartition);
+
             var consumer = GetConsumerBuilder();
-            var partitions = AssignPartitions(topicName, startPartition, endPartition);
+            var partitions = new List<TopicPartition>();
+            foreach (var topic in topicNames)
+            {
+                partitions.AddRange(AssignPartitions(topic, startPartition, endPartition));
+            }
             consumer.Assign(partitions);
-            _logger.LogInformation("Consumer assigned to partitions [{StartPartition} - {EndPartition}] on topic {TopicName}", startPartition, endPartition, topicName);
+
+            _logger.LogInformation("Consumer assigned to partitions [{StartPartition} - {EndPartition}] on topics [{TopicNames}]",
+                startPartition, endPartition, string.Join(", ", topicNames));
             return consumer;
         }
 
-        public IConsumer<Null, string> GetKafkaConsumerByPartition(string topicName, int[] partitions)
+        public IConsumer<Null, string> GetKafkaConsumerByPartition(string[] topicNames, int[] partitions)
         {
-            _logger.LogInformation("Creating Kafka consumer for topic {TopicName} and assigning partitions [{Partitions}].", topicName, string.Join(", ", partitions));
+            _logger.LogInformation("Creating Kafka consumer for topics [{TopicNames}] and assigning partitions [{Partitions}].",
+                string.Join(", ", topicNames), string.Join(", ", partitions));
+
             var consumer = GetConsumerBuilder();
-            var assignedPartitions = AssignPartitions(topicName, partitions);
+            var assignedPartitions = new List<TopicPartition>();
+            foreach (var topic in topicNames)
+            {
+                assignedPartitions.AddRange(AssignPartitions(topic, partitions));
+            }
             consumer.Assign(assignedPartitions);
-            _logger.LogInformation("Consumer assigned to partitions [{Partitions}] on topic {TopicName}", string.Join(", ", partitions), topicName);
+
+            _logger.LogInformation("Consumer assigned to partitions [{Partitions}] on topics [{TopicNames}]",
+                string.Join(", ", partitions), string.Join(", ", topicNames));
             return consumer;
         }
+
 
         public void StartConsumerLoop()
         {
@@ -168,6 +187,14 @@ namespace Pay.Recorrencia.Gestao.Consumer.KafkaConsumer
             using var adminClient = new AdminClientBuilder(new AdminClientConfig { BootstrapServers = _inputParametersKafka.BootstrapServers }).Build();
             var metadata = adminClient.GetMetadata(TimeSpan.FromSeconds(3));
             return metadata.Topics.Any(t => t.Topic == topicName);
+        }
+
+        private string[] GetTopics()
+        {
+            return _inputParametersKafka?.Consumer?.KafkaConsumerMappings?
+                        .Select(m => m.Topic)
+                        .Where(t => !string.IsNullOrWhiteSpace(t))
+                        .ToArray() ?? [];
         }
 
         private ConsumerConfig ConfigKafkaConsumerWithScramSha512()

@@ -403,3 +403,4 @@ FodyWeavers.xsd
 
 # Remove .DS_Store MacOS files
 .DS_Store
+/.vscode

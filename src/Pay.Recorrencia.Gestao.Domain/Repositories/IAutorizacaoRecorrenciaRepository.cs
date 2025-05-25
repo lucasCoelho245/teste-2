@@ -1,20 +1,16 @@
 ﻿using Pay.Recorrencia.Gestao.Domain.DTO;
 using Pay.Recorrencia.Gestao.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Pay.Recorrencia.Gestao.Domain.Repositories
 {
     public interface IAutorizacaoRecorrenciaRepository
     {
         #region IncluirAutorizacaoRecorrencia
+        Task<AutorizacaoRecorrencia> ConsultaAutorizacao(string? IdAutorizacao, string? IdRecorrencia);
+        Task<AtualizacaoAutorizacaoRecorrencia> ConsultarAtualizacaoAutorizacaoRecorrencia(string? IdAutorizacao, string? IdRecorrencia);
+        Task<AutorizacaoRecorrencia> ConsultaAutorizacao(string IdRecorrencia);
+        Task<AtualizacaoAutorizacaoRecorrencia> ConsultarAtualizacaoAutorizacaoRecorrencia(string IdRecorrencia);
 
-        Task<AutorizacaoRecorrencia> ConsultaAutorizacao(Guid id);
-
-        Task<AtualizacaoAutorizacaoRecorrencia> ConsultarAtualizacaoAutorizacaoRecorrencia(Guid id);
 
         Task<AutorizacaoRecorrencia> InsertAutorizacaoRecorrencia(AutorizacaoRecorrencia autorizacaoRecorrencia);
 
@@ -32,6 +28,7 @@ namespace Pay.Recorrencia.Gestao.Domain.Repositories
         void Update(AutorizacaoRecorrencia autorizacao);
         #endregion
         Task<ListaAutorizacaoRecPaginada> GetAllAsync(GetListaAutorizacaoRecDTOPaginada data);
-        Task<AutorizacaoRecPagination> GetAsync(GetAutorizacaoRecDTOPaginada data);
+        Task<AutorizacaoRecNonPagination> GetAsync(GetAutorizacaoRecDTOPaginada data);
+        string ConsultarCodMunIBGE();
     }
 }

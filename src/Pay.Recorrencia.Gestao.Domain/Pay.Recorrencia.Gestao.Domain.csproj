@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <EnableDefaultStaticWebAssets>false</EnableDefaultStaticWebAssets>
     <Nullable>enable</Nullable>
+    <Configurations>Debug;Release;Alpha</Configurations>
   </PropertyGroup>
 
 </Project>

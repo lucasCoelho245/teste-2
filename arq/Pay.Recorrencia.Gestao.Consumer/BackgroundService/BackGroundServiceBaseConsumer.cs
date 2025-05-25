@@ -8,34 +8,27 @@ using Pay.Recorrencia.Gestao.Consumer.Models;
 
 namespace Pay.Recorrencia.Gestao.Consumer.BackGroundService
 {
-    public abstract class BackGroundServiceBaseConsumer : BackgroundService
+    public abstract class BackGroundServiceBaseConsumer(
+        IOptions<InputParametersKafkaConsumer> kafkaparameter,
+        ILogger<BackGroundServiceBaseConsumer> logger,
+        ConsumerServices consumerServices,
+        IServiceScopeFactory scopeFactory) : BackgroundService
     {
-        private readonly ILogger<BackGroundServiceBaseConsumer> _logger;
-        protected readonly InputParametersKafkaConsumer _inputKafkaParameter;
-        private readonly ConsumerServices consumerServices;
-        private readonly IServiceScopeFactory _scopeFactory;
-
-        protected BackGroundServiceBaseConsumer(
-            IOptions<InputParametersKafkaConsumer> kafkaparameter,
-            ILogger<BackGroundServiceBaseConsumer> logger,
-            ConsumerServices consumerServices,
-            IServiceScopeFactory scopeFactory)
-        {
-            _logger = logger;
-            _inputKafkaParameter = kafkaparameter.Value;
-            this.consumerServices = consumerServices;
-            _scopeFactory = scopeFactory;
-        }
+        private readonly ILogger<BackGroundServiceBaseConsumer> _logger = logger;
+        protected readonly InputParametersKafkaConsumer _inputKafkaParameter = kafkaparameter.Value;
+        private readonly ConsumerServices consumerServices = consumerServices;
+        private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            if (_inputKafkaParameter.Consumer?.ConsumedTopics == null)
+            var topics = GetTopics();
+            if (topics == null || topics.Length == 0)
             {
-                _logger.LogWarning("ConsumedTopics is null.");
+                _logger.LogWarning("ConsumedTopics is null or empty.");
                 return;
             }
 
-            _logger.LogInformation("Consumer Hosted Service is listening: {ConsumedTopics}.", _inputKafkaParameter.Consumer.ConsumedTopics);
+            _logger.LogInformation("Consumer Hosted Service is listening: {ConsumedTopics}.", topics);
             await DoWork(stoppingToken);
         }
 
@@ -106,6 +99,14 @@ namespace Pay.Recorrencia.Gestao.Consumer.BackGroundService
             {
                 consumerServices.Consume(result, topic);
             }, new CancellationToken());
+        }
+
+        private string?[] GetTopics()
+        {
+            return _inputKafkaParameter?.Consumer?.KafkaConsumerMappings?
+                        .Select(static m => m.Topic)
+                        .Where(t => !string.IsNullOrWhiteSpace(t))
+                        .ToArray() ?? [];
         }
     }
 }

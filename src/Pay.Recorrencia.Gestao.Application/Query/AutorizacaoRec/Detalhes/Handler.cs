@@ -1,3 +1,4 @@
+using Confluent.Kafka;
 using MediatR;
 using Pay.Recorrencia.Gestao.Application.Response;
 using Pay.Recorrencia.Gestao.Domain.Repositories;
@@ -6,10 +7,10 @@ namespace Pay.Recorrencia.Gestao.Application.Query.AutorizacaoRec.Detalhes
 {
     public class DetalhesAutorizacaoRecHandler : IRequestHandler<DetalhesAutorizacaoRecRequest, DetalhesAutorizacaoRecResponse>
     {
-        private IAutorizacaoRecorrenciaRepository _repository { get; }
+        private IMockAutorizacaoRecorrenciaRepository _repository { get; }
 
         public DetalhesAutorizacaoRecHandler(
-            IAutorizacaoRecorrenciaRepository repository)
+            IMockAutorizacaoRecorrenciaRepository repository)
         {
             _repository = repository; 
         }
@@ -18,24 +19,14 @@ namespace Pay.Recorrencia.Gestao.Application.Query.AutorizacaoRec.Detalhes
         {
             var dataFinder = await _repository.GetAsync(request);
 
-            bool status = dataFinder.Items.Any();
-            
+            if(dataFinder.Data == null) throw new Exception("Nenhuma autorização encontrada para estes parâmetros de busca");
+
             var response = new DetalhesAutorizacaoRecResponse()
             {
-                Status = status,
-                StatusCode = status ? 200 : 404,
-                Data = new ItemsData() 
-                {
-                    Items = dataFinder.Items,
-                },
-                Pagination = new Pagination()
-                {
-                    TotalItems = dataFinder.TotalItems,
-                    TotalPages = (int)Math.Ceiling((double)dataFinder.TotalItems / request.PageSize),
-                    PageSize  = request.PageSize,
-                    CurrentPage = request.Page
-                },
-                Message = status ? "" : "ERRO-PIXAUTO-003"
+                Status = "OK",
+                StatusCode = 200,
+                Data = dataFinder.Data,
+                Message = "Operação realizada com sucesso"
             };
 
             return await Task.FromResult(response);

@@ -3,11 +3,6 @@ using Pay.Recorrencia.Gestao.Domain.DTO;
 using Pay.Recorrencia.Gestao.Domain.Entities;
 using Pay.Recorrencia.Gestao.Domain.Repositories;
 using Pay.Recorrencia.Gestao.Infrastructure.Data.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
 {
@@ -27,7 +22,7 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
 
         #region IncluirAutorizacaoRecorrencia
 
-        public async Task<AutorizacaoRecorrencia> ConsultaAutorizacao(Guid id)
+        public async Task<AutorizacaoRecorrencia> ConsultaAutorizacao(string? idAutorizacao, string? idRecorrencia)
         {
             const string query = @" SELECT 
                                     idAutorizacao AS IdAutorizacao,
@@ -56,20 +51,66 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
                                     codigoSituacaoCancelamentoRecorrencia AS CodigoSituacaoCancelamentoRecorrencia,
                                     dataUltimaAtualizacao AS DataUltimaAtualizacao,
                                     dataHoraCriacaoRecorr AS DataHoraCriacaoRecorr,
-                                    flagPermitenotificacao AS FlagPermitenotificacao,
+                                    flagPermiteNotificacao AS FlagPermiteNotificacao,
                                     flagValorMaximoAutorizado AS FlagValorMaximoAutorizado,
-                                    tpRetentativa AS TpRetentativa
+                                    tpRetentativa AS TpRetentativa,
+                                    dataProximoPagamento AS DataProximoPagamento
                                                                 FROM AUTORIZACAO_RECORRENCIA
-                                                                WHERE idAutorizacao = @Id";
+                                                                WHERE idAutorizacao = @IdAutorizacao AND idRecorrencia = @IdRecorrencia";
 
             using (var session = Db.CreateSession())
             {
-                var result = await session.QueryAsync<AutorizacaoRecorrencia>(query, new { Id = id });
+                var result = await _dbContext.QueryAsync<AutorizacaoRecorrencia>(query, new { IdAutorizacao = idAutorizacao, IdRecorrencia = idRecorrencia });
                 return result.FirstOrDefault();
             }
         }
 
-        public async Task<AtualizacaoAutorizacaoRecorrencia> ConsultarAtualizacaoAutorizacaoRecorrencia(Guid id)
+
+
+        public async Task<AutorizacaoRecorrencia> ConsultaAutorizacao(string idRecorrencia)
+        {
+            const string query = @" SELECT 
+                                    idAutorizacao AS IdAutorizacao,
+                                    idRecorrencia AS IdRecorrencia,
+                                    situacaoRecorrencia AS SituacaoRecorrencia,
+                                    tipoRecorrencia AS TipoRecorrencia,
+                                    tipoFrequencia AS TipoFrequencia,
+                                    dataInicialAutorizacaoRecorrencia AS DataInicialAutorizacaoRecorrencia,
+                                    dataFinalAutorizacaoRecorrencia AS DataFinalAutorizacaoRecorrencia,
+                                    codigoMoedaAutorizacaoRecorrencia AS CodigoMoedaAutorizacaoRecorrencia,
+                                    valorRecorrencia AS ValorRecorrencia,
+                                    valorMaximoAutorizado AS ValorMaximoAutorizado,
+                                    motivoRejeicaoRecorrencia AS MotivoRejeicaoRecorrencia,
+                                    nomeUsuarioRecebedor AS NomeUsuarioRecebedor,
+                                    cpfCnpjUsuarioRecebedor AS CpfCnpjUsuarioRecebedor,
+                                    participanteDoUsuarioRecebedor AS ParticipanteDoUsuarioRecebedor,
+                                    codMunIBGE AS CodMunIBGE,
+                                    cpfCnpjUsuarioPagador AS CpfCnpjUsuarioPagador,
+                                    ContaUsuarioPagador AS ContaUsuarioPagador,
+                                    agenciaUsuariopagador AS AgenciaUsuariopagador,
+                                    participanteDousuarioPagador AS ParticipanteDousuarioPagador,
+                                    nomeDevedor AS NomeDevedor,
+                                    cpfCnpjDevedor AS CpfCnpjDevedor,
+                                    numeroContrato AS NumeroContrato,
+                                    descObjetoContrato AS DescObjetoContrato,
+                                    codigoSituacaoCancelamentoRecorrencia AS CodigoSituacaoCancelamentoRecorrencia,
+                                    dataUltimaAtualizacao AS DataUltimaAtualizacao,
+                                    dataHoraCriacaoRecorr AS DataHoraCriacaoRecorr,
+                                    flagPermiteNotificacao AS FlagPermiteNotificacao,
+                                    flagValorMaximoAutorizado AS FlagValorMaximoAutorizado,
+                                    tpRetentativa AS TpRetentativa,
+                                    dataProximoPagamento AS DataProximoPagamento
+                                                                FROM AUTORIZACAO_RECORRENCIA
+                                                                WHERE idRecorrencia = @IdRecorrencia";
+
+            using (var session = Db.CreateSession())
+            {
+                var result = await _dbContext.QueryAsync<AutorizacaoRecorrencia>(query, new { IdRecorrencia = idRecorrencia });
+                return result.FirstOrDefault();
+            }
+        }
+
+        public async Task<AtualizacaoAutorizacaoRecorrencia> ConsultarAtualizacaoAutorizacaoRecorrencia(string? idAutorizacao, string? idRecorrencia)
         {
             const string query = @"SELECT idAutorizacao AS IdAutorizacao,
                                           idRecorrencia AS IdRecorrencia,
@@ -77,11 +118,28 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
                                           dataHoraSituacaoRecorrencia AS DataHoraSituacaoRecorrencia,
                                           dataUltimaAtualizacao AS DataUltimaAtualizacao
                                                 FROM ATUALIZACOES_AUTORIZACOES_RECORRENCIA 
-                                                WHERE idAutorizacao = @Id";
+                                                WHERE idAutorizacao = @IdAutorizacao OR idRecorrencia = @IdRecorrencia";
 
             using (var session = this.Db.CreateSession())
             {
-                var result = Db.Query<AtualizacaoAutorizacaoRecorrencia>(query, new { Id = id });
+                var result = await _dbContext.QueryAsync<AtualizacaoAutorizacaoRecorrencia>(query, new { IdAutorizacao = idAutorizacao, IdRecorrencia = idRecorrencia });
+                return result.FirstOrDefault();
+            }
+        }
+
+        public async Task<AtualizacaoAutorizacaoRecorrencia> ConsultarAtualizacaoAutorizacaoRecorrencia(string idRecorrencia)
+        {
+            const string query = @"SELECT idAutorizacao AS IdAutorizacao,
+                                          idRecorrencia AS IdRecorrencia,
+                                          tipoSituacaoRecorrencia AS TipoSituacaoRecorrencia,
+                                          dataHoraSituacaoRecorrencia AS DataHoraSituacaoRecorrencia,
+                                          dataUltimaAtualizacao AS DataUltimaAtualizacao
+                                                FROM ATUALIZACOES_AUTORIZACOES_RECORRENCIA 
+                                                WHERE idRecorrencia = @IdRecorrencia";
+
+            using (var session = this.Db.CreateSession())
+            {
+                var result = await _dbContext.QueryAsync<AtualizacaoAutorizacaoRecorrencia>(query, new { IdRecorrencia = idRecorrencia });
                 return result.FirstOrDefault();
             }
 
@@ -124,7 +182,8 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
                                                                          dataHoraCriacaoRecorr,
                                                                          flagpermitenotificacao,
                                                                          flagValorMaximoAutorizado,
-                                                                         tpRetentativa) 
+                                                                         tpRetentativa,
+                                                                         dataProximoPagamento) 
                                          VALUES (@idAutorizacao,
                                                 @idRecorrencia,
                                                 @situacaoRecorrencia,
@@ -153,7 +212,8 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
                                                 @dataHoraCriacaoRecorr,
                                                 @flagPermiteNotificacao,
                                                 @flagValorMaximoAutorizado,
-                                                @tpRetentativa)";
+                                                @tpRetentativa,
+                                                @dataProximoPagamento)";
 
                     session.Execute(query, new
                     {
@@ -185,7 +245,8 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
                         autorizacaoRecorrencia.DataHoraCriacaoRecorr,
                         autorizacaoRecorrencia.FlagPermiteNotificacao,
                         autorizacaoRecorrencia.FlagValorMaximoAutorizado,
-                        autorizacaoRecorrencia.TpRetentativa
+                        autorizacaoRecorrencia.TpRetentativa,
+                        autorizacaoRecorrencia.DataProximoPagamento
                     });
 
                     session.Commit();
@@ -219,12 +280,13 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
                                                 dataHoraCriacaoRecorr AS dataHoraCriacaoRecorr,
                                                 flagPermitenotificacao AS FlagPermitenotificacao,
                                                 flagValorMaximoAutorizado AS FlagValorMaximoAutorizado,
-                                                tpRetentativa AS TpRetentativa
+                                                tpRetentativa AS TpRetentativa,
+                                                dataProximoPagamento AS DataProximoPagamento
                                                                 FROM AUTORIZACAO_RECORRENCIA
-                                                                WHERE idAutorizacao = @Id";
+                                                                WHERE IdRecorrencia = @Id";
 
-                    var idAutorizacao = autorizacaoRecorrencia.IdAutorizacao;
-                    var data = Db.Query<AutorizacaoRecorrencia>(SQLSelect, new { Id = idAutorizacao }).ToList().FirstOrDefault();
+                    var IdRecorrencia = autorizacaoRecorrencia.IdRecorrencia;
+                    var data = Db.Query<AutorizacaoRecorrencia>(SQLSelect, new { Id = IdRecorrencia }).ToList().FirstOrDefault();
                     return data;
 
                 }
@@ -244,11 +306,8 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
                 session.Begin();
                 try
                 {
-                    //Logger.Information("Starting insert transaction");
-
-                    //TODO: Verify
-                    string tipoSituacaoRecorrencia = autorizacaoRecorrencia.SituacaoRecorrencia;
-                    DateTime dataHoraSituacaoRecorrencia = autorizacaoRecorrencia.DataHoraCriacaoRecorr;
+                    string? tipoSituacaoRecorrencia = autorizacaoRecorrencia.TipoSituacaoRecorrencia;
+                    DateTime? dataHoraSituacaoRecorrencia = autorizacaoRecorrencia.DataHoraCriacaoRecorr.HasValue ? autorizacaoRecorrencia.DataHoraCriacaoRecorr : DateTime.Now;
                     DateTime dataUltimaAtualizacao = autorizacaoRecorrencia.DataUltimaAtualizacao;
 
                     const string query = @" INSERT INTO ATUALIZACOES_AUTORIZACOES_RECORRENCIA (idAutorizacao,
@@ -272,17 +331,6 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
                     });
 
                     session.Commit();
-
-                    //var idAutorizacao = autorizacaoRecorrencia.IdAutorizacao;
-                    //var sql = @"SELECT idAutorizacao AS IdAutorizacao,
-                    //                   idRecorrencia AS IdRecorrencia,
-                    //                   tipoSituacaoRecorrencia AS TipoSituacaoRecorrencia,
-                    //                   dataHoraSituacaoRecorrencia AS dataHoraSituacaoRecorrencia,
-                    //                   dataUltimaAtualizacao AS DataUltimaAtualizacao
-                    //                FROM ATUALIZACOES_AUTORIZACOES_RECORRENCIA 
-                    //            WHERE idAutorizacao = @IdAutorizacao";
-
-                    //var atualizacao = Db.Query<AtualizacaoAutorizacaoRecorrencia>(sql, new { IdAutorizacao = idAutorizacao }).FirstOrDefault();
                     return null;
                 }
                 catch (Exception)
@@ -317,7 +365,7 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
                                                                 @DataHoraSituacaoRecorrencia,
                                                                 @DataUltimaAtualizacao) ";
 
-                    string strTipoSituacaoRecorrencia = atualizacaoAutorizacao.TipoSituacaoRecorrencia.ToString();
+                    string strTipoSituacaoRecorrencia = atualizacaoAutorizacao.TipoSituacaoRecorrencia;
 
                     session.Execute(query, new
                     {
@@ -388,7 +436,7 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
         {
             //Logger.Information("Atualizando a autorizacao de recorrencia com ID: {IdAutorizacao} e TIPO: {TipoSituacaoRecorrencia}",
             //    atualizacoes.IdAutorizacao,
-            //    atualizacoes.TipoSituacaoRecorrencia.ToString());
+            //    atualizacoes.TipoSituacaoRecorrencia.ToString
 
             const string query = @"
                 UPDATE AUTORIZACAO_RECORRENCIA
@@ -440,17 +488,17 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
             if (!String.IsNullOrEmpty(data.SituacaoRecorrencia))
             {
                 sqlCount += "AND situacaoRecorrencia = @SituacaoRecorrencia";
-                sqlQuery += "AND situacaoRecorrencia = @SituacaoRecorrencia";;
+                sqlQuery += "AND situacaoRecorrencia = @SituacaoRecorrencia"; ;
             }
             if (!String.IsNullOrEmpty(data.NomeUsuarioRecebedor))
             {
                 sqlCount += $" AND nomeUsuarioRecebedor COLLATE Latin1_General_CI_AI LIKE '%{data.NomeUsuarioRecebedor}%'";
-                sqlQuery += $" AND nomeUsuarioRecebedor COLLATE Latin1_General_CI_AI LIKE '%{data.NomeUsuarioRecebedor}%'";;
+                sqlQuery += $" AND nomeUsuarioRecebedor COLLATE Latin1_General_CI_AI LIKE '%{data.NomeUsuarioRecebedor}%'"; ;
             }
-            if(!String.IsNullOrEmpty(data.AgenciaUsuarioPagador?.ToString()))
+            if (!String.IsNullOrEmpty(data.AgenciaUsuarioPagador?.ToString()))
             {
                 sqlCount += $" AND agenciaUsuarioPagador = {int.Parse(data.AgenciaUsuarioPagador)}";
-                sqlQuery += $" AND agenciaUsuarioPagador = {int.Parse(data.AgenciaUsuarioPagador)}";;
+                sqlQuery += $" AND agenciaUsuarioPagador = {int.Parse(data.AgenciaUsuarioPagador)}"; ;
             }
 
             int offset = (data.Page - 1) * data.PageSize;
@@ -467,32 +515,23 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
                 TotalItems = totalItems
             };
         }
-        public async Task<AutorizacaoRecPagination> GetAsync(GetAutorizacaoRecDTOPaginada data)
+        public async Task<AutorizacaoRecNonPagination> GetAsync(GetAutorizacaoRecDTOPaginada data)
         {
-            string sqlCount = $"SELECT COUNT(*) " +
-                                        "FROM [dbo].[AUTORIZACAO_RECORRENCIA] " +
-                                        "WHERE idAutorizacao = @IdAutorizacao AND " + 
-                                        "idRecorrencia = @IdRecorrencia";
-
             string sqlQuery = $"SELECT * FROM [dbo].[AUTORIZACAO_RECORRENCIA] " +
-                            $"WHERE idAutorizacao = @IdAutorizacao AND " + 
+                            $"WHERE idAutorizacao = @IdAutorizacao AND " +
                             "idRecorrencia = @IdRecorrencia";
-
-            int offset = (data.Page - 1) * data.PageSize;
-
-            sqlQuery += $" ORDER BY dataHoraCriacaoRecorr OFFSET {offset} ROWS FETCH NEXT @PageSize ROWS ONLY";
-
-            int totalItems = await _dbContext.ExecuteScalarAsync(sqlCount, data);
 
             var items = await _dbContext.QueryAsync<AutorizacaoRecorrenciaDetalhes>(sqlQuery, data);
 
-            return new AutorizacaoRecPagination()
+            return new AutorizacaoRecNonPagination()
             {
-                Items = items,
-                TotalItems = totalItems
+                Data = items.First()
             };
         }
 
-
+        public string ConsultarCodMunIBGE()
+        {
+            return "3550308";
+        }
     }
 }

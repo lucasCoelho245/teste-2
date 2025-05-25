@@ -4,6 +4,8 @@ namespace Pay.Recorrencia.Gestao.Domain.Enums
 {
     public enum TipoSituacaoRecorrencia
     {
+        [EnumMember(Value = "READ")] // ?
+        READ,
         [EnumMember(Value = "CRTN")] // ?
         CRTN,
         [EnumMember(Value = "AUT1")] // ?
@@ -14,5 +16,9 @@ namespace Pay.Recorrencia.Gestao.Domain.Enums
         AUT3,
         [EnumMember(Value = "AUT4")] // ?
         AUT4,
+        [EnumMember(Value = "CFDB")] // ?
+        CFDB,
+        [EnumMember(Value = "CCLD")] // ?
+        CCLD,
     }
 }

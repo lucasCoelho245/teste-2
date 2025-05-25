@@ -5,30 +5,24 @@ using Microsoft.Extensions.Options;
 using Pay.Recorrencia.Gestao.Consumer.Models;
 
 namespace Pay.Recorrencia.Gestao.Infrastructure.Services;
-public class KafkaConsumerService : IHostedService
+public class KafkaConsumerService(IOptions<InputParametersKafkaConsumer> config, ILogger<KafkaConsumerService> logger) : IHostedService
 {
-    private readonly ILogger<KafkaConsumerService> _logger;
-    private readonly InputParametersKafkaConsumer _config;
+    private readonly ILogger<KafkaConsumerService> _logger = logger;
+    private readonly InputParametersKafkaConsumer _config = config.Value;
     private IConsumer<Ignore, string>? _consumer;
-
-    public KafkaConsumerService(IOptions<InputParametersKafkaConsumer> config, ILogger<KafkaConsumerService> logger)
-    {
-        _config = config.Value;
-        _logger = logger;
-    }
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
         var consumerConfig = new ConsumerConfig
         {
             BootstrapServers = _config.BootstrapServers,
-            GroupId = _config.Consumer.GroupId,
+            GroupId = _config?.Consumer?.GroupId,
             AutoOffsetReset = AutoOffsetReset.Earliest,
             EnableAutoCommit = false // Desabilitar auto commit para controle manual
         };
 
         _consumer = new ConsumerBuilder<Ignore, string>(consumerConfig).Build();
-        _consumer.Subscribe(_config.Consumer.ConsumedTopics);
+        _consumer.Subscribe(_config?.Consumer?.KafkaConsumerMappings?.Select(x => x.Topic));
 
         Task.Run(() => ConsumeMessages(cancellationToken), cancellationToken);
 
@@ -44,13 +38,13 @@ public class KafkaConsumerService : IHostedService
                 var consumeResult = _consumer?.Consume(cancellationToken);
                 if (consumeResult != null)
                 {
-                    _logger.LogInformation($"Message: {consumeResult.Message.Value}");
+                    _logger.LogInformation("Message: {MessageValue}", consumeResult.Message.Value);
 
                     // Processar a mensagem aqui
 
                     // Commit manual do offset após processar a mensagem
-                    _consumer.Commit(consumeResult);
-                    _logger.LogInformation($"Offset committed: {consumeResult.Offset}");
+                    _consumer?.Commit(consumeResult);
+                    _logger.LogInformation("Offset committed: {Offset}", consumeResult.Offset);
                 }
             }
         }
@@ -60,7 +54,7 @@ public class KafkaConsumerService : IHostedService
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error consuming messages: {ex.Message}");
+            _logger.LogError("Error consuming messages: {ErrorMessage}", ex.Message);
         }
         finally
         {

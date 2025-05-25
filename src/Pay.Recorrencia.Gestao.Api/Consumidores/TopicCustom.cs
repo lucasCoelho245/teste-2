@@ -12,10 +12,21 @@ namespace Pay.Recorrencia.Gestao.Api.Consumidores
             _logger = logger;
         }
 
-        public void Consume(string topic, int partition, string message, Headers headers, string topicWithEnviroment, long offSet)
+        public async Task ConsumeAsync(string topic, int partition, string message, Headers headers, string topicWithEnviroment, long offSet)
         {
-            /// Regras de Negocio que devem ser feitas quando consumir a mensagem.....
+            try
+            {
+                // Regras de Negocio que devem ser feitas quando consumir a mensagem.....
+                _logger.LogInformation($"Consuming message from topic: {topic}, partition: {partition}, offset: {offSet}");
+                // Add your business logic here
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while consuming the message.");
+            }
 
+            // Ensure the method always returns a Task
+            await Task.CompletedTask;
         }
     }
 }

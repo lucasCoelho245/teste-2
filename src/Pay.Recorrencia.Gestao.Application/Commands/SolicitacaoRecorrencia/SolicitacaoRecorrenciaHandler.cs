@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using Pay.Recorrencia.Gestao.Application.Interfaces;
 using Pay.Recorrencia.Gestao.Application.Response;
 using Pay.Recorrencia.Gestao.Domain.DTO;
 using Pay.Recorrencia.Gestao.Domain.Repositories;
@@ -27,21 +28,22 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.SolicitacaoRecorrencia
             if (solicitacaoRecorrencia == null)
                 await _solicitacaoRecorrenciaRepository.Insert(dto);
             else
-                return await Task.FromResult(new MensagemPadraoResponse() { CodigoRetorno = "ERRO-PIXAUTO-001", MensagemErro = "Solicitação já existente." });
-
-            return await Task.FromResult(new MensagemPadraoResponse() { CodigoRetorno = StatusCodes.Status200OK.ToString(), MensagemErro = "Solicitação criada com sucesso." });
+                return await Task.FromResult(new MensagemPadraoResponse(StatusCodes.Status400BadRequest, "ERRO-PIXAUTO-001", "Solicitação já existente."));
+                
+            return await Task.FromResult(new MensagemPadraoResponse(StatusCodes.Status200OK, string.Empty, string.Empty));
         }
 
         public async Task<MensagemPadraoResponse> Handle(AtualizarSolicitacaoRecorrenciaCommand request, CancellationToken cancellationToken)
         {
+
             var dto = _mapper.Map<SolicitacaoAutorizacaoRecorrenciaUpdateDTO>(request);
             var solicitacaoRecorrencia = await _solicitacaoRecorrenciaRepository.GetSolicitacaoRecorrencia(dto.IdSolicRecorrencia);
             if (solicitacaoRecorrencia != null)
                 await _solicitacaoRecorrenciaRepository.Update(dto);
             else
-                return await Task.FromResult(new MensagemPadraoResponse() { CodigoRetorno = "ERRO-PIXAUTO-005", MensagemErro = "Solicitação não encontrada." });
+                return await Task.FromResult(new MensagemPadraoResponse(StatusCodes.Status404NotFound, "ERRO-PIXAUTO-005", "Solicitação não encontrada."));
 
-            return await Task.FromResult(new MensagemPadraoResponse() { CodigoRetorno = StatusCodes.Status200OK.ToString(), MensagemErro = "Solicitação atualizada com sucesso." });
+            return await Task.FromResult(new MensagemPadraoResponse(StatusCodes.Status200OK, string.Empty, string.Empty));
         }
     }
 }

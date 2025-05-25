@@ -7,10 +7,10 @@ namespace Pay.Recorrencia.Gestao.Application.Query.SolicAutorizacaoRec.Lista
 {
     public class ListaSolicAutorizacaoRecHandler : IRequestHandler<ListaSolicAutorizacaoRecRequest, ListaSolicAutorizacaoRecResponse>
     {
-        private ISolicitacaoRecorrenciaRepository _repository { get; }
+        private IMockSolicitacaoRecorrenciaRepository _repository { get; }
 
         public ListaSolicAutorizacaoRecHandler(
-            ISolicitacaoRecorrenciaRepository repository)
+            IMockSolicitacaoRecorrenciaRepository repository)
         {
             _repository = repository;
         }
@@ -19,24 +19,24 @@ namespace Pay.Recorrencia.Gestao.Application.Query.SolicAutorizacaoRec.Lista
         {
             var dataFinder = await _repository.GetAllAsync(request);
 
-            bool status = dataFinder.Items.Any();
+            if(!dataFinder.Items.Any()) throw new Exception("Nenhuma solicitacao encontrada para estes parâmetros de busca");
 
             var response = new ListaSolicAutorizacaoRecResponse()
             {
-                Status = status,
-                StatusCode = status ? 200 : 404,
+                Status = "OK",
+                StatusCode = 200,
                 Data = new ItemsData()
                 {
                     Items = dataFinder.Items,
+                    Pagination = new Pagination()
+                    {
+                        TotalItems = dataFinder.TotalItems,
+                        TotalPages = (int)Math.Ceiling((double)dataFinder.TotalItems / request.PageSize),
+                        PageSize = request.PageSize,
+                        CurrentPage = request.Page
+                    },
                 },
-                Pagination = new Pagination()
-                {
-                    TotalItems = dataFinder.TotalItems,
-                    TotalPages = (int)Math.Ceiling((double)dataFinder.TotalItems / request.PageSize),
-                    PageSize = request.PageSize,
-                    CurrentPage = request.Page
-                },
-                Message = status ? "" : "Nenhuma solicitação encontrada para estes parâmetros de busca"
+                Message = "Operação realizada com sucesso"
             };
             return await Task.FromResult(response);
         }

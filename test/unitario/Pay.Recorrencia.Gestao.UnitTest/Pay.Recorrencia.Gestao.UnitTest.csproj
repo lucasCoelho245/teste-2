@@ -7,6 +7,7 @@
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <Configurations>Debug;Release;Alpha</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Pay.Recorrencia.Gestao.Api\Pay.Recorrencia.Gestao.Api.csproj" />
     <ProjectReference Include="..\..\..\src\Pay.Recorrencia.Gestao.Application\Pay.Recorrencia.Gestao.Application.csproj" />
+    <ProjectReference Include="..\..\..\src\Pay.Recorrencia.Gestao.Consumer.Worker\Pay.Recorrencia.Gestao.Consumer.Worker.csproj" />
   </ItemGroup>
 
   <ItemGroup>

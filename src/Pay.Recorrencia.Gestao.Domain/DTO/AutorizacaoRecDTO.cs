@@ -30,7 +30,7 @@ namespace Pay.Recorrencia.Gestao.Domain.DTO
     }
     public class GetAutorizacaoRecDTOPaginada : PaginacaoDTO 
     {
-        public required Guid IdRecorrencia { get; set; }
-        public required Guid IdAutorizacao { get; set; }
+        public required string IdRecorrencia { get; set; }
+        public required string IdAutorizacao { get; set; }
     }
 }

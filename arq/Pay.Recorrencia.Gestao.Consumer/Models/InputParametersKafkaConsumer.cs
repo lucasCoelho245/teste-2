@@ -34,10 +34,11 @@
     }
 
     public class InputParameterskafkaProducer
-    {
-        /// <summary>
-        /// Name of the Topic that should be used to produce the message
-        /// </summary>
+    {       
+        public string? TopicControleJornada { get; set; }
+
+        public string? TopicInclusaoAutorizacaoRecorrencia { get; set; }
+
         public string? Topic { get; set; }
 
         /// <summary>
@@ -54,22 +55,28 @@
         /// Name of the Application that is using the library
         /// </summary>
         public required string ApplicationName { get; set; }
-
     }
 
     public class InputParameterskafkaConsumer
     {
+        
         public bool ActivateConsumer { get; set; }
         public string? GroupId { get; set; }
         public bool AutoOffsetResetEarliest { get; set; }
         public int ConsumerProccessMaxMS { get; set; }
         public bool EnableAutoCommit { get; set; }
-        public string? ConsumedTopics { get; set; }
         public string? TopicTo { get; set; }
         public int? HeartbeatIntervalMs { get; set; }
         public int? SessionTimeoutMs { get; set; }
         public int? MaxPollIntervalMs { get; set; }
         public string? Debug { get; set; }
+        public List<KafkaConsumerMapping>? KafkaConsumerMappings { get; set; }
+    }
+
+    public class KafkaConsumerMapping
+    {
+        public string? Topic { get; set; }
+        public string? ConsumerType { get; set; }
     }
 
     public class InputSecurityParametersKafka

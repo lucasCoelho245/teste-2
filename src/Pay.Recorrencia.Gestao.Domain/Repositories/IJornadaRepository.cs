@@ -1,16 +1,12 @@
-﻿using Pay.Recorrencia.Gestao.Domain.Entities;
+﻿using Pay.Recorrencia.Gestao.Domain.DTO;
+using Pay.Recorrencia.Gestao.Domain.Entities;
 
 namespace Pay.Recorrencia.Gestao.Domain.Repositories;
 
 public interface IJornadaRepository
 {
-    Task<IEnumerable<Jornada>> GetAllAsync();
-    Task<Jornada> GetByTpJornadaAndIdRecorrenciaAsync(string tpJornada, string idRecorrencia);
-    Task<Jornada> GetByTpJornadaAndIdE2EAsync(string tpJornada, string idE2E);
-
-    Task<IEnumerable<Jornada>> GetByAnyFilterAsync(
-        string tpJornada,
-        string idRecorrencia,
-        string idE2E,
-        string idConciliacaoRecebedor);
+    Task<ListaJornadaPaginada<JornadaList>> GetAllAsync(JornadaDTO data);
+    Task<JornadaNonPagination> GetByTpJornadaAndIdRecorrenciaAsync(JornadaAutorizacaoDTO data);
+    Task<JornadaNonPagination?> GetByTpJornadaAndIdE2EAsync(JornadaAgendamentoDTO data);
+    Task<ListaJornadaPaginada<Jornada>> GetByAnyFilterAsync(JornadaAutorizacaoAgendamentoDTO data);
 }

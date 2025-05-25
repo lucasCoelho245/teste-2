@@ -1,9 +1,11 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Confluent.Kafka;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Pay.Recorrencia.Gestao.Consumer.BackGroundService;
 using Pay.Recorrencia.Gestao.Consumer.KafkaConsumer;
 using Pay.Recorrencia.Gestao.Consumer.KafkaConsumer.Interface;
+using Pay.Recorrencia.Gestao.Consumer.Models;
 using System.Reflection;
 
 namespace Pay.Recorrencia.Gestao.Consumer.Extensions

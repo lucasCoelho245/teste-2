@@ -1,60 +1,137 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Net;
+using MediatR;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Mvc;
+using Pay.Recorrencia.Gestao.Application.Query.ControleJornada.Detalhes;
+using Pay.Recorrencia.Gestao.Application.Query.ControleJornada.Lista;
+using Pay.Recorrencia.Gestao.Application.Query.SolicAutorizacaoRec.Detalhes;
+using Pay.Recorrencia.Gestao.Application.Response;
 using Pay.Recorrencia.Gestao.Application.Services;
+using Pay.Recorrencia.Gestao.Domain.DTO;
+using Pay.Recorrencia.Gestao.Domain.Entities;
+using Swashbuckle.AspNetCore.Annotations;
 
 [ApiController]
-[Route("api/[controller]")]
+[ApiVersion("1.0")]
+[Route("v{version:apiVersion}/pix-automatico/jornadas")]
 public class JornadaController : ControllerBase
 {
-    private readonly IJornadaService _service;
-    public JornadaController(IJornadaService service) => _service = service;
+    private IMediator _mediator { get; }
+    public JornadaController(
+        IMediator mediator)
+    {
+        _mediator = mediator;
+    }
 
-    // 1) GET /api/jornada
     [HttpGet]
-    public async Task<IActionResult> GetAllAsync()
+    [SwaggerOperation(Summary = "Retorna jornada")]
+    [SwaggerResponse(200, Type = typeof(TypedApiMetaDataPaginatedResponse<JornadaList>))]
+    [SwaggerResponse(404, Type = typeof(ErrorResponse))]
+    [Produces("application/json")]
+    public async Task<IActionResult> GetAllAsync([FromQuery] ListaControleJornadaRequest request)
     {
-        var list = await _service.GetAllAsync();
-        return Ok(list);
+        try
+        {
+            var response = await _mediator.Send(request);
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(404, new ErrorResponse
+            {
+                StatusCode = 404,
+                Status = HttpStatusCode.NotFound.ToString(),
+                Error = new Error
+                {
+                    StatusCode = 404,
+                    Message = ex.Message
+                }
+            });
+        }
     }
 
-    // 2) GET /api/jornada/filtro?tpJornada=…&idRecorrencia=…
-    [HttpGet("filtro")]
-    public async Task<IActionResult> GetByRecorrenciaAsync(
-        [FromQuery][Required] string tpJornada,
-        [FromQuery] string idRecorrencia)
+    [HttpGet("autorizacao")]
+    [SwaggerOperation(Summary = "Retorna jornada")]
+    [SwaggerResponse(200, Type = typeof(ApiMetaDataNonPaginatedResponse<Jornada>))]
+    [SwaggerResponse(404, Type = typeof(ErrorResponse))]
+    [Produces("application/json")]
+    public async Task<IActionResult> GetByRecorrenciaAsync([FromQuery] DetalhesControleJornadaAutorizacaoResquest request)
     {
-        var dto = await _service.GetByJornadaERecorrenciaAsync(tpJornada, idRecorrencia);
-        if (dto == null) return NoContent();
-        return Ok(dto);
+        try
+        {
+            var response = await _mediator.Send(request);
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(404, new ErrorResponse
+            {
+                StatusCode = 404,
+                Status = HttpStatusCode.NotFound.ToString(),
+                Error = new Error
+                {
+                    StatusCode = 404,
+                    Message = ex.Message
+                }
+            });
+        }
     }
 
-    // 3) GET /api/jornada/filtro-agendamento?tpJornada=…&idE2E=…
-    [HttpGet("filtro-agendamento")]
-    public async Task<IActionResult> GetByE2EAsync(
-        [FromQuery][Required] string tpJornada,
-        [FromQuery] string idE2E)
+    [HttpGet("agendamento")]
+    [SwaggerOperation(Summary = "Retorna jornada")]
+    [SwaggerResponse(200, Type = typeof(ApiMetaDataNonPaginatedResponse<Jornada>))]
+    [SwaggerResponse(404, Type = typeof(ErrorResponse))]
+    [Produces("application/json")]
+    public async Task<IActionResult> GetByAnyFilterAsync([FromQuery] DetalhesControleJornadaAgendamentoResquest request)
     {
-        var dto = await _service.GetByJornadaE2EAsync(tpJornada, idE2E);
-        if (dto == null) return NoContent();
-        return Ok(dto);
+
+        try
+        {
+            var response = await _mediator.Send(request);
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(404, new ErrorResponse
+            {
+                StatusCode = 404,
+                Status = HttpStatusCode.NotFound.ToString(),
+                Error = new Error
+                {
+                    StatusCode = 404,
+                    Message = ex.Message
+                }
+            });
+        }
+
     }
 
-    // 4) GET /api/jornada/filtros?tpJornada=…[&idRecorrencia=…][&idE2E=…][&idConciliacaoRecebedor=…]
-    [HttpGet("filtros")]
-    public async Task<IActionResult> GetByAnyFilterAsync(
-        [FromQuery][Required] string tpJornada,
-        [FromQuery] string? idRecorrencia = null,
-        [FromQuery] string? idE2E = null,
-        [FromQuery] string? idConciliacaoRecebedor = null)
+    [HttpGet("autorizacao-agendamento")]
+    [SwaggerOperation(Summary = "Retorna jornada")]
+    [SwaggerResponse(200, Type = typeof(TypedApiMetaDataPaginatedResponse<Jornada>))]
+    [SwaggerResponse(404, Type = typeof(ErrorResponse))]
+    [Produces("application/json")]
+    public async Task<IActionResult> GetByAnyFilterAsync([FromQuery] ListaControleJornadaAgendamentoAutorizacaoRequest request)
     {
-        var list = await _service.GetByAnyFilterAsync(
-            tpJornada,
-            idRecorrencia,
-            idE2E,
-            idConciliacaoRecebedor);
+        try
+        {
+            var response = await _mediator.Send(request);
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(404, new ErrorResponse
+            {
+                StatusCode = 404,
+                Status = HttpStatusCode.NotFound.ToString(),
+                Error = new Error
+                {
+                    StatusCode = 404,
+                    Message = ex.Message
+                }
+            });
+        }
 
-        if (!list.Any()) return NoContent();
-        return Ok(list);
     }
-
 }

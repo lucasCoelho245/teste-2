@@ -1,52 +1,129 @@
-﻿using System.Data;
-using Dapper;
+﻿using DataAccess.Domain;
+using Pay.Recorrencia.Gestao.Domain.DTO;
 using Pay.Recorrencia.Gestao.Domain.Entities;
 using Pay.Recorrencia.Gestao.Domain.Repositories;
 
 namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories;
 
-    public class JornadaRepository : IJornadaRepository
+public class JornadaRepository : IJornadaRepository
+{
+    private readonly IDataAccess _dataAccess;
+    public JornadaRepository(IDataAccess dataAccess)
     {
-        private readonly IDbConnection _db;
-        public JornadaRepository(IDbConnection db) => _db = db;
+        _dataAccess = dataAccess;
+    }
 
-        public Task<IEnumerable<Jornada>> GetAllAsync()
-            => _db.QueryAsync<Jornada>("SELECT * FROM dbo.Jornadas");
+    public async Task<ListaJornadaPaginada<JornadaList>> GetAllAsync(JornadaDTO request)
+    {
+        string sql = @"SELECT * FROM dbo.Jornadas";
 
-        public Task<Jornada> GetByTpJornadaAndIdRecorrenciaAsync(string tpJornada, string idRecorrencia)
+
+        using var session = _dataAccess.CreateSession();
+        try
         {
-            const string sql = @"
-                SELECT * FROM dbo.Jornadas
-                WHERE TpJornada = @tpJornada
-                  AND IdRecorrencia = @idRecorrencia";
-            return _db.QueryFirstOrDefaultAsync<Jornada>(sql, new { tpJornada, idRecorrencia });
+            session.Begin();
+
+            var items = await session.QueryAsync<JornadaList>(sql, request);
+
+            var pagedItems = items 
+                .Skip((request.Page - 1) * request.PageSize)
+                .Take(request.PageSize);
+
+            return new ListaJornadaPaginada<JornadaList> { Items = pagedItems, TotalItems = items.Count() };
+
+        }
+        catch
+        {
+            session.Rollback();
+            throw;
         }
 
-        public Task<Jornada> GetByTpJornadaAndIdE2EAsync(string tpJornada, string idE2E)
-        {
-            const string sql = @"
+
+    }
+
+    public async Task<JornadaNonPagination> GetByTpJornadaAndIdRecorrenciaAsync(JornadaAutorizacaoDTO request)
+    {
+        string sql = @"
                 SELECT * FROM dbo.Jornadas
-                WHERE TpJornada = @tpJornada
-                  AND IdE2E = @idE2E";
-            return _db.QueryFirstOrDefaultAsync<Jornada>(sql, new { tpJornada, idE2E });
-        }
+                WHERE TpJornada = @tpJornada";
 
-        public Task<IEnumerable<Jornada>> GetByAnyFilterAsync(
-            string tpJornada,
-            string idRecorrencia,
-            string idE2E,
-            string idConciliacaoRecebedor)
+        if (!string.IsNullOrEmpty(request.IdRecorrencia))
+            sql += " AND  IdRecorrencia = @idRecorrencia";
+
+        using var session = _dataAccess.CreateSession();
+        try
         {
-            var sql = @"SELECT * FROM dbo.Jornadas WHERE 1=1";
-            if (!string.IsNullOrEmpty(tpJornada))
-                sql += " AND TpJornada = @tpJornada";
-            if (!string.IsNullOrEmpty(idRecorrencia))
-                sql += " AND IdRecorrencia = @idRecorrencia";
-            if (!string.IsNullOrEmpty(idE2E))
-                sql += " AND IdE2E = @idE2E";
-            if (!string.IsNullOrEmpty(idConciliacaoRecebedor))
-                sql += " AND IdConciliacaoRecebedor = @idConciliacaoRecebedor";
+            session.Begin();
 
-            return _db.QueryAsync<Jornada>(sql, new { tpJornada, idRecorrencia, idE2E, idConciliacaoRecebedor });
+            var items = await session.QueryAsync<Jornada>(sql, request);
+
+            return new JornadaNonPagination { Data = items.FirstOrDefault() };
+
+        }
+        catch
+        {
+            session.Rollback();
+            throw;
         }
     }
+
+    public async Task<JornadaNonPagination?> GetByTpJornadaAndIdE2EAsync(JornadaAgendamentoDTO request)
+    {
+        string sql = @"
+                SELECT * FROM dbo.Jornadas
+                WHERE TpJornada = @tpJornada";
+
+        if (!string.IsNullOrEmpty(request.IdE2E))
+            sql += " AND IdE2E = @IdE2E";
+
+        using var session = _dataAccess.CreateSession();
+        try
+        {
+            session.Begin();
+
+            var items = await session.QueryAsync<Jornada>(sql, request);
+
+            return new JornadaNonPagination { Data = items.FirstOrDefault() };
+
+        }
+        catch
+        {
+            session.Rollback();
+            throw;
+        }
+
+    }
+
+    public async Task<ListaJornadaPaginada<Jornada>> GetByAnyFilterAsync(JornadaAutorizacaoAgendamentoDTO request)
+    {
+        var sql = @"SELECT * FROM dbo.Jornadas WHERE 1=1";
+        if (!string.IsNullOrEmpty(request.TpJornada))
+            sql += " AND TpJornada = @TpJornada";
+        if (!string.IsNullOrEmpty(request.IdRecorrencia))
+            sql += " AND IdRecorrencia = @IdRecorrencia";
+        if (!string.IsNullOrEmpty(request.IdE2E))
+            sql += " AND IdE2E = @IdE2E";
+        if (!string.IsNullOrEmpty(request.IdConciliacaoRecebedor))
+            sql += " AND IdConciliacaoRecebedor = @IdConciliacaoRecebedor";
+
+        using var session = _dataAccess.CreateSession();
+        try
+        {
+            session.Begin();
+
+            var items = await session.QueryAsync<Jornada>(sql, request);
+
+            var pagedItems = items
+                .Skip((request.Page - 1) * request.PageSize)
+                .Take(request.PageSize);
+
+            return new ListaJornadaPaginada<Jornada> { Items = pagedItems, TotalItems = items.Count() };
+
+        }
+        catch
+        {
+            session.Rollback();
+            throw;
+        }
+    }
+}

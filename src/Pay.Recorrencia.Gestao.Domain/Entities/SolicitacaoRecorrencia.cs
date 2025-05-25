@@ -27,15 +27,14 @@
         public string? CpfCnpjDevedor { get; set; }
         public string NumeroContrato { get; set; }
         public string? DescObjetoContrato { get; set; }
-        public string DataHoraCriacaoRecorr { get; set; }
+        public string? DataHoraCriacaoRecorr { get; set; }
         public string DataHoraCriacaoSolicRecorr { get; set; }
         public string DataHoraExpiracaoSolicRecorr { get; set; }
         public string DataUltimaAtualizacao { get; set; }
     }
-    public class SolicAutorizacaoRecPagination
+    public class SolicAutorizacaoRecNonPagination
     {
-        public IEnumerable<SolicitacaoRecorrencia> Items { get; set; }
-        public int TotalItems { get; set; }
+        public SolicitacaoRecorrencia Data { get; set; }
     }
 
     public class SolicAutorizacaoRecList

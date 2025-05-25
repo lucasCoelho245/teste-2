@@ -21,8 +21,16 @@ namespace Pay.Recorrencia.Gestao.Crosscutting.Extensions
             //services.AddSingleton<IPixAutomaticoDataAccess>(provider => new PixAutomaticoDataAccess(dbConfigPixAutomatico));
             services.AddSingleton<IPixAutomaticoDataAccess>(provider => new PixAutomaticoDataAccess(dbConfig));
 
+            services.AddScoped<ISolicitacaoRecorrenciaRepository, SolicitacaoRecorrenciaRepository>();
+            services.AddScoped<IAutorizacaoRecorrenciaRepository, AutorizacaoRecorrenciaRepository>();
+            services.AddScoped<IInformacaoSolicitacaoRepository, InformacaoSolicitacaoRepository>();
+            services.AddScoped<IControleJornadaRepository, ControleJornadaRepository>();
+            services.AddScoped<ISolicitacaoSequencialRepository, SolicitacaoSequencialRepository>();
             services.AddTransient<ISolicitacaoRecorrenciaRepository, SolicitacaoRecorrenciaRepository>();
-            services.AddTransient<IAutorizacaoRecorrenciaRepository, AutorizacaoRecorrenciaRepository>();
+            services.AddTransient<IMockSolicitacaoRecorrenciaRepository, MockSolicitacaoRecorrenciaRepository>();
+            services.AddTransient<IMockAutorizacaoRecorrenciaRepository, MockAutorizacaoRecorrenciaRepository>();
+            services.AddTransient<IQRCodeLoactionRepository, QRCodeLocationRepository>();
+            services.AddTransient<IJornadaRepository, JornadaRepository>();
 
             return services;
         }

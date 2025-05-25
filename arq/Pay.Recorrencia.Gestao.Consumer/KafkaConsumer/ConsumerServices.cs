@@ -20,7 +20,7 @@ namespace Pay.Recorrencia.Gestao.Consumer.KafkaConsumer
 
             IConsumerOperation consumerOperation = GetOperation(topic);
 
-            consumerOperation.Consume(
+            consumerOperation.ConsumeAsync(
                 topic: topic,
                 partition: partition,
                 message: message,

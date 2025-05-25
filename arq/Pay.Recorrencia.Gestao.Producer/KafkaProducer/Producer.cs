@@ -1,4 +1,5 @@
-﻿using Confluent.Kafka;
+﻿using System.Text.Json;
+using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Pay.Recorrencia.Gestao.Producer.KafkaProducer.Interface;
@@ -79,7 +80,20 @@ namespace Pay.Recorrencia.Gestao.Producer.KafkaProducer
                 );
             }
 
-            _producer.Flush(TimeSpan.FromSeconds(_inputParameterKafka.Producer.ProducerFlushTime));
+            _producer.Flush(TimeSpan.FromSeconds(_inputParameterKafka.Producer.ProducerFlushTime)); 
+        }
+
+        public async Task EnviarEventoAsync<T>(T evento, string topic) where T : class
+
+        {
+            var headers = new Headers
+            {
+                { "key", new byte[] { 1, 2, 3 } }
+            };
+
+            var serializedModel = JsonSerializer.Serialize(evento);
+
+            await ProduceAsyncMessage(headers, serializedModel, topic);
         }
 
         public void Dispose()

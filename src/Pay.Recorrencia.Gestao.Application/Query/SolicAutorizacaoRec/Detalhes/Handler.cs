@@ -6,10 +6,10 @@ namespace Pay.Recorrencia.Gestao.Application.Query.SolicAutorizacaoRec.Detalhes
 {
     public class DetalhesSolicAutorizacaoRecHandler : IRequestHandler<DetalhesSolicAutorizacaoRecRequest, DetalhesSolicAutorizacaoRecResponse>
     {
-        private ISolicitacaoRecorrenciaRepository _repository { get; }
+        private IMockSolicitacaoRecorrenciaRepository _repository { get; }
 
         public DetalhesSolicAutorizacaoRecHandler(
-            ISolicitacaoRecorrenciaRepository repository)
+            IMockSolicitacaoRecorrenciaRepository repository)
         {
             _repository = repository;
         }
@@ -18,24 +18,14 @@ namespace Pay.Recorrencia.Gestao.Application.Query.SolicAutorizacaoRec.Detalhes
         {
             var dataFinder = await _repository.GetAsync(request);
 
-            bool status = dataFinder.Items.Any();
+            if(dataFinder.Data == null) throw new Exception("Nenhuma solicitacao encontrada para estes parâmetros de busca");
 
             var response = new DetalhesSolicAutorizacaoRecResponse()
             {
-                Status = status,
-                StatusCode = status ? 200 : 404,
-                Data = new ItemsData()
-                {
-                    Items = dataFinder.Items,
-                },
-                Pagination = new Pagination()
-                {
-                    TotalItems = dataFinder.TotalItems,
-                    TotalPages = (int)Math.Ceiling((double)dataFinder.TotalItems / request.PageSize),
-                    PageSize = request.PageSize,
-                    CurrentPage = request.Page
-                },
-                Message = status ? "" : "ERRO-PIXAUTO-003"
+                Status = "OK",
+                StatusCode = 200,
+                Data = dataFinder.Data,
+                Message = "Operação realizada com sucesso"
             };
 
             return await Task.FromResult(response);

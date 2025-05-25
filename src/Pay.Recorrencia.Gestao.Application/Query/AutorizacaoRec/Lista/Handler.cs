@@ -7,36 +7,36 @@ namespace Pay.Recorrencia.Gestao.Application.Query.AutorizacaoRec.Lista
 {
     public class ListaAutorizacaoRecHandler : IRequestHandler<ListaAutorizacaoRecRequest, ListaAutorizacaoRecResponse>
     {
-        private IAutorizacaoRecorrenciaRepository _repository { get; }
+        private IMockAutorizacaoRecorrenciaRepository _repository { get; }
 
         public ListaAutorizacaoRecHandler(
-            IAutorizacaoRecorrenciaRepository repository)
+            IMockAutorizacaoRecorrenciaRepository repository)
         {
-            _repository = repository; 
+            _repository = repository;
         }
 
         public async Task<ListaAutorizacaoRecResponse> Handle(ListaAutorizacaoRecRequest request, CancellationToken cancellationToken)
         {
             var dataFinder = await _repository.GetAllAsync(request);
 
-            bool status = dataFinder.Items.Any();
-            
+            if(!dataFinder.Items.Any()) throw new Exception("Nenhuma autorização encontrada para estes parâmetros de busca");
+
             var response = new ListaAutorizacaoRecResponse()
             {
-                Status = status,
-                StatusCode = status ? 200 : 404,
-                Data = new ItemsData() 
+                Status = "OK",
+                StatusCode = 200,
+                Data = new ItemsData()
                 {
                     Items = dataFinder.Items,
+                    Pagination = new Pagination()
+                    {
+                        TotalItems = dataFinder.TotalItems,
+                        TotalPages = (int)Math.Ceiling((double)dataFinder.TotalItems / request.PageSize),
+                        PageSize = request.PageSize,
+                        CurrentPage = request.Page
+                    },
                 },
-                Pagination = new Pagination()
-                {
-                    TotalItems = dataFinder.TotalItems,
-                    TotalPages = (int)Math.Ceiling((double)dataFinder.TotalItems / request.PageSize),
-                    PageSize  = request.PageSize,
-                    CurrentPage = request.Page
-                },
-                Message = status ? "" : "Nenhuma autorização encontrada para estes parâmetros de busca"
+                Message = "Operação realizada com sucesso"
             };
             return await Task.FromResult(response);
         }

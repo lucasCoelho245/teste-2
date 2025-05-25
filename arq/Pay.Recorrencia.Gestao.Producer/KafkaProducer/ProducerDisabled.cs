@@ -129,5 +129,10 @@ namespace Pay.Recorrencia.Gestao.Producer.KafkaProducer
         {
             Log.Information("Kafka está desabilitado.");
         }
+
+        public async Task EnviarEventoAsync<T>(T evento, string? topic) where T : class
+        {
+            Log.Information("Kafka está desabilitado.");
+        }
     }
 }
