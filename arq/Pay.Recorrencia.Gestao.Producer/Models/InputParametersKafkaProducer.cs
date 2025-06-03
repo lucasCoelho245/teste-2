@@ -30,8 +30,10 @@
         
         
         public string? TopicControleJornada { get; set; }
-    
-    
+
+        public string? TopicNotificacaoCliente { get; set; }
+
+
     }
 
     public class InputParameterskafkaProducer
@@ -59,8 +61,11 @@
         
         
         public string? TopicControleJornada { get; set; }
-    
-    
+        public string? TopicRecorrenciaAceitaRejeitada { get; set; }
+
+        public string? TopicNotificacaoCliente { get; set; }
+
+
     }
 
     public class InputSecurityParametersKafka

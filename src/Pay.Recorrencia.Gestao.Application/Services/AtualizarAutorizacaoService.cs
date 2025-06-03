@@ -28,14 +28,14 @@ namespace Pay.Recorrencia.Gestao.Application.Services
             }
 
             AutorizacaoRecorrencia autorizacaoEncontrada = await _autorizacaoRecorrenciaRepository.ConsultaAutorizacao(request.IdAutorizacao, request.IdRecorrencia);
-            
+
             if (autorizacaoEncontrada is null)
             {
                 return await Task.FromResult(new MensagemPadraoResponse(StatusCodes.Status400BadRequest, "ERRO-PIXAUTO-009", "Chave não encontrada na tabela AUTORIZACAO_RECORRENCIA"));
                 //throw new Exception("ERRO-PIXAUTO-009");
             }
 
-            // var atualizacao = _autorizacaoRecorrenciaRepository.ConsultarAtualizacaoAutorizacaoRecorrencia(request.IdAutorizacao, request.IdRecorrencia).Result;
+            //var atualizacao = _autorizacaoRecorrenciaRepository.ConsultarAtualizacaoAutorizacaoRecorrencia(request.IdAutorizacao, request.IdRecorrencia).Result;
 
             //if (atualizacao == null)
             //{
@@ -44,10 +44,10 @@ namespace Pay.Recorrencia.Gestao.Application.Services
             //}
 
             DateTime dataHoraAtual = DateTime.Now;
-            
+
             AtualizaCamposAutorizacaoRecorrencia(autorizacaoEncontrada, request, dataHoraAtual);
 
-            InsereAtualizacaoAutorizacaoRecorrencia(autorizacaoEncontrada, request, dataHoraAtual);
+            //InsereAtualizacaoAutorizacaoRecorrencia(autorizacaoEncontrada, request, dataHoraAtual);
 
             return await Task.FromResult(new MensagemPadraoResponse(StatusCodes.Status200OK, string.Empty, "OK"));
         }
@@ -87,14 +87,11 @@ namespace Pay.Recorrencia.Gestao.Application.Services
 
         private static bool ValidarCamposComDominioCorreto(AlterarAutorizacaoCommand request)
         {
-            // string[] dominioSituacaoRecorrencia = { "PDRC", "PRRC", "RCSD", "PDCF", "LIDO", "PDPG", "CFPG", "ERPG", "PRCF", "CFDB", "ERCF", "CCLD" };
-            string[] dominioSituacaoRecorrencia = { "INAC", "INRJ", "PDNG", "RJCT", "EXPR", "INRC", "RCSD", "INAP", "APRV", "SPND", "CCLD" };
+            string[] dominioSituacaoRecorrencia = { "PDRC", "PRRC", "RCSD", "PDCF", "LIDO", "PDPG", "CFPG", "ERPG", "PRCF", "CFDB", "ERCF", "CCLD", "EXPR", "CCLP", "CCLR", "INPR" };
             string[] dominioTipoRecorrencia = { "RCUR" };
             string[] dominioTipoFrequencia = { "MIAN", "MNTH", "QURT", "WEEK", "YEAR" };
             string[] dominioCodigoMoedaAutorizacaoRecorrencia = { "BRL" };
-            string[] dominioMotivoRejeicaoRecorrencia = { "AC01", "AC04", "AC06", "AG12", "AM05", "AP01", "AP02", "AP03", "AP04", "AP05",
-                "AP06", "AP07", "AP08", "AP09", "AP10", "AP11", "AP12", "AP13", "AP14", "AP15",
-                "CH16", "DS27", "MD01", "MD20", "RC09", "RC10"};
+            string[] dominioMotivoRejeicaoRecorrencia = { "AP13", "AP14" };
             string[] dominioCodigoSituacaoCancelamentoRecorrencia = { "ACCL", "CPCL", "DCSD", "ERSL", "FRUD", "NRES", "PCFD", "SLCR", "SLDB" };
             string[] dominioTipoSituacaoRecorrencia = { "READ", "CRTN", "AUT1", "AUT2", "AUT3", "AUT4", "CFDB", "CCLD" };
             string[] dominioTipoRetentativa = { "NAO_PERMITE", "PERMITE_3R_7D" };
@@ -155,7 +152,28 @@ namespace Pay.Recorrencia.Gestao.Application.Services
             autorizacaoEncontrada.DataUltimaAtualizacao = dataHoraAtual;
             autorizacaoEncontrada.DataProximoPagamento = request.DataProximoPagamento ?? autorizacaoEncontrada.DataProximoPagamento;
 
-             _autorizacaoRecorrenciaRepository.Update(autorizacaoEncontrada);
+            // Validação e atribuição de DataAutorizacao
+            if (request.DataAutorizacao.HasValue)
+            {
+                if (request.DataAutorizacao < autorizacaoEncontrada.DataHoraCriacaoRecorr)
+                    throw new InvalidOperationException("A Data de Autorização não pode ser menor que a Data de Criação da Recorrência.");
+
+                autorizacaoEncontrada.DataAutorizacao = request.DataAutorizacao;
+            }
+
+            // Validação e atribuição de DataCancelamento
+            if (request.DataCancelamento.HasValue)
+            {
+                if (request.DataCancelamento < autorizacaoEncontrada.DataHoraCriacaoRecorr)
+                    throw new InvalidOperationException("A Data de Cancelamento não pode ser menor que a Data de Criação da Recorrência.");
+
+                autorizacaoEncontrada.DataCancelamento = request.DataCancelamento;
+            }
+
+
+
+
+            _autorizacaoRecorrenciaRepository.Update(autorizacaoEncontrada);
         }
 
         private async void InsereAtualizacaoAutorizacaoRecorrencia(AutorizacaoRecorrencia autorizacaoEncontrada, AlterarAutorizacaoCommand request, DateTime dataHoraAtual)

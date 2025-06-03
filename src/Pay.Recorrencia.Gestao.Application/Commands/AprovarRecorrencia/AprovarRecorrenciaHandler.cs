@@ -56,7 +56,7 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarRecorrencia
             if (responseInsertAutorizacao.StatusCode != StatusCodes.Status200OK)
                 return responseInsertAutorizacao;
 
-            var atualizarAutorizacaoCommand = ConverteParaAtualizarAutorizacaoRecorrencia(request, inserirAutorizacaoRecorrenciaCommand, dataAtual);
+            var atualizarAutorizacaoCommand = ConverteParaAtualizarAutorizacaoRecorrencia(request, inserirAutorizacaoRecorrenciaCommand, dataAtual, responseInsertAutorizacao.IdAutorizacaoResponse);
             var responseUpdateAutorizacao = await _atualizarAutorizacaoService.Handle(atualizarAutorizacaoCommand);
             if (responseUpdateAutorizacao.StatusCode != StatusCodes.Status200OK)
                 return responseUpdateAutorizacao;
@@ -106,14 +106,14 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarRecorrencia
             };
         }
 
-        private AlterarAutorizacaoCommand ConverteParaAtualizarAutorizacaoRecorrencia(AprovarRecorrenciaCommand request, InserirAutorizacaoRecorrenciaCommand inserirAutorizacaoRecorrencia, DateTime dataAtual)
+        private AlterarAutorizacaoCommand ConverteParaAtualizarAutorizacaoRecorrencia(AprovarRecorrenciaCommand request, InserirAutorizacaoRecorrenciaCommand inserirAutorizacaoRecorrencia, DateTime dataAtual, string idAutorizacao)
         {
             return new AlterarAutorizacaoCommand
             {
-                IdAutorizacao = inserirAutorizacaoRecorrencia.IdAutorizacao,
+                IdAutorizacao = idAutorizacao,
                 IdRecorrencia = inserirAutorizacaoRecorrencia.IdRecorrencia,
                 TipoSituacaoRecorrencia = "AUT" + Convert.ToInt32(request.TpJornada),
-                SituacaoRecorrencia = "PDRC",
+                SituacaoRecorrencia = "INPR",
                 DataHoraSituacaoRecorrencia = dataAtual,// timestamp da jornada 1, verificar!
                 //TipoRecorrencia = "RCUR",
                 TipoFrequencia = request.TipoFrequencia,
@@ -134,23 +134,22 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarRecorrencia
 
             var alterarAutorizacaoCommand = new InserirAutorizacaoRecorrenciaCommand
             {
-                IdAutorizacao = GerarIdAutorizacao(),
                 IdRecorrencia = request.IdRecorrencia,
                 TipoRecorrencia = request.TipoRecorrencia,
                 TipoFrequencia = request.TipoFrequencia,
                 DataInicialAutorizacaoRecorrencia = request.DataInicialRecorrencia,
-                DataFinalAutorizacaoRecorrencia = (DateTime)request.DataFinalRecorrencia,
+                DataFinalAutorizacaoRecorrencia = request.DataFinalRecorrencia,
                 SituacaoRecorrencia = "PDNG",
                 CodigoMoedaAutorizacaoRecorrencia = request.CodigoMoedaSolicRecorr,
                 ValorRecorrencia = request.ValorFixoSolicRecorrencia,
-                ValorMaximoAutorizado = (decimal)request.ValorMaximoAutorizado,
+                ValorMaximoAutorizado = request.ValorMaximoAutorizado,
                 NomeUsuarioRecebedor = request.NomeUsuarioRecebedor,
                 CpfCnpjUsuarioRecebedor = request.CpfCnpjUsuarioRecebedor,
                 ParticipanteDoUsuarioRecebedor = request.ParticipanteDoUsuarioRecebedor,
                 CodMunIBGE = codMunIBGE,
                 CpfCnpjUsuarioPagador = request.CpfCnpjUsuarioPagador,
                 ContaUsuarioPagador = request.ContaUsuarioPagador,
-                AgenciaUsuarioPagador = (int)request.AgenciaUsuarioPagador,
+                AgenciaUsuarioPagador = request.AgenciaUsuarioPagador,
                 ParticipanteDoUsuarioPagador = request.ParticipanteDoUsuarioPagador,
                 NomeDevedor = request.NomeDevedor,
                 CpfCnpjDevedor = request.CpfCnpjDevedor,
@@ -161,33 +160,9 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarRecorrencia
                 FlagPermiteNotificacao = true,
                 FlagValorMaximoAutorizado = flagValorMaximoAutorizado,
                 TpRetentativa = request.TpRetentativa,
-
             };
             return alterarAutorizacaoCommand;
         }
-
-        public static string GerarIdAutorizacao()
-        {
-            string fixedPart = "AR";
-            string datePart = DateTime.Now.ToString("yyyyMMdd");
-            string sequencePart = GerarSequenciaUnica();
-            //return "AR2025052000000000014";
-            return fixedPart + datePart + sequencePart;
-        }
-
-        public static string GerarSequenciaUnica()
-        {
-            Random random = new Random();
-            string resultado = "";
-
-            for (int i = 0; i < 11; i++)
-            {
-                resultado += random.Next(0, 10); // Gera um dígito entre 0 e 9
-            }
-
-            return resultado;
-        }
-
 
         private static async Task<IProducer<Null, string>> EnviodeEventoParaKafkaLocal(AprovarRecorrenciaCommand aprovacaoRecorrencia)
         {

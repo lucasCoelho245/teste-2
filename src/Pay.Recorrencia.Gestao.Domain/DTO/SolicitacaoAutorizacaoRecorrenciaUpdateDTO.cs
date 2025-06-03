@@ -9,5 +9,6 @@
         public string? SituacaoSolicRecorrencia { get; set; }
 
         public DateTime DataUltimaAtualizacao { get; set; }
+        public string CodigoSituacaoCancelamentoRecorrencia { get; set; }
     }
 }

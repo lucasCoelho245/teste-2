@@ -58,7 +58,7 @@ namespace Pay.Recorrencia.Gestao.UniTest
         {
             return new ControleJornadaEntrada
             {
-                IdFimAFim = "AGNT",
+                IdE2E = "AGNT",
                 IdRecorrencia = "rec-001",
                 TpJornada = "TIPO",
                 SituacaoJornada = "PENDENTE",

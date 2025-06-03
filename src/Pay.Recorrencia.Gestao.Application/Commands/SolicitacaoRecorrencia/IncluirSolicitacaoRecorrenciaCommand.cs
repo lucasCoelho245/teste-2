@@ -28,7 +28,7 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.SolicitacaoRecorrencia
         public DateTime? DataFinalRecorrencia { get; set; }
 
         [Required]
-        [RegularExpression("PNDG|CCLD|CFDB", ErrorMessage = "O valor de SituacaoSolicRecorrencia deve ser um dos seguintes: PNDG, CCLD, CFDB.")]
+        [RegularExpression("PDNG|CCLD|CFDB", ErrorMessage = "O valor de SituacaoSolicRecorrencia deve ser um dos seguintes: PDNG, CCLD, CFDB.")]
         public string SituacaoSolicRecorrencia { get; set; }
 
         [RegularExpression("BRL", ErrorMessage = "O valor de CodigoMoedaSolicRecorr deve ser 'BRL'.")]

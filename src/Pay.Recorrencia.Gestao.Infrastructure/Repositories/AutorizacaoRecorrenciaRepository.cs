@@ -1,4 +1,5 @@
-﻿using DataAccess.Domain;
+﻿using System.Text.Json;
+using DataAccess.Domain;
 using Pay.Recorrencia.Gestao.Domain.DTO;
 using Pay.Recorrencia.Gestao.Domain.Entities;
 using Pay.Recorrencia.Gestao.Domain.Repositories;
@@ -54,9 +55,11 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
                                     flagPermiteNotificacao AS FlagPermiteNotificacao,
                                     flagValorMaximoAutorizado AS FlagValorMaximoAutorizado,
                                     tpRetentativa AS TpRetentativa,
-                                    dataProximoPagamento AS DataProximoPagamento
+                                    dataProximoPagamento AS DataProximoPagamento,
+                                    dataAutorizacao AS DataAutorizacao,
+                                    dataCancelamento AS DataCancelamento
                                                                 FROM AUTORIZACAO_RECORRENCIA
-                                                                WHERE idAutorizacao = @IdAutorizacao AND idRecorrencia = @IdRecorrencia";
+                                                                WHERE idAutorizacao = @IdAutorizacao OR idRecorrencia = @IdRecorrencia";
 
             using (var session = Db.CreateSession())
             {
@@ -183,7 +186,9 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
                                                                          flagpermitenotificacao,
                                                                          flagValorMaximoAutorizado,
                                                                          tpRetentativa,
-                                                                         dataProximoPagamento) 
+                                                                         dataProximoPagamento,
+                                                                         dataAutorizacao,
+                                                                         dataCancelamento) 
                                          VALUES (@idAutorizacao,
                                                 @idRecorrencia,
                                                 @situacaoRecorrencia,
@@ -213,7 +218,9 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
                                                 @flagPermiteNotificacao,
                                                 @flagValorMaximoAutorizado,
                                                 @tpRetentativa,
-                                                @dataProximoPagamento)";
+                                                @dataProximoPagamento,
+                                                @dataAutorizacao,
+                                                @dataCancelamento)";
 
                     session.Execute(query, new
                     {
@@ -246,7 +253,9 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
                         autorizacaoRecorrencia.FlagPermiteNotificacao,
                         autorizacaoRecorrencia.FlagValorMaximoAutorizado,
                         autorizacaoRecorrencia.TpRetentativa,
-                        autorizacaoRecorrencia.DataProximoPagamento
+                        autorizacaoRecorrencia.DataProximoPagamento,
+                        autorizacaoRecorrencia.DataAutorizacao,
+                        autorizacaoRecorrencia.DataCancelamento
                     });
 
                     session.Commit();
@@ -281,7 +290,9 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
                                                 flagPermitenotificacao AS FlagPermitenotificacao,
                                                 flagValorMaximoAutorizado AS FlagValorMaximoAutorizado,
                                                 tpRetentativa AS TpRetentativa,
-                                                dataProximoPagamento AS DataProximoPagamento
+                                                dataProximoPagamento AS DataProximoPagamento,
+                                                dataAutorizacao as DataAutorizacao,
+                                                dataCancelamento as DataCancelamento
                                                                 FROM AUTORIZACAO_RECORRENCIA
                                                                 WHERE IdRecorrencia = @Id";
 
@@ -447,7 +458,12 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
                     situacaoRecorrencia = @SituacaoRecorrencia,
                     motivoRejeicaoRecorrencia = @MotivoRejeicaoRecorrencia,
                     codigoSituacaoCancelamentoRecorrencia = @CodigoSituacaoCancelamentoRecorrencia,
-                    dataUltimaAtualizacao = @DataUltimaAtualizacao
+                    dataUltimaAtualizacao = @DataUltimaAtualizacao,
+                    codMunIBGE  = @CodMunIBGE,
+                    dataHoraCriacaoRecorr = @DataHoraCriacaoRecorr,
+                    dataProximoPagamento = @DataProximoPagamento,
+                    dataAutorizacao = @DataAutorizacao,
+                    dataCancelamento = @DataCancelamento
                 WHERE idAutorizacao = @IdAutorizacao";
 
             using (var session = Db.CreateSession())
@@ -462,6 +478,11 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
                     autorizacao.MotivoRejeicaoRecorrencia,
                     autorizacao.CodigoSituacaoCancelamentoRecorrencia,
                     autorizacao.DataUltimaAtualizacao,
+                    autorizacao.CodMunIBGE,
+                    autorizacao.DataHoraCriacaoRecorr,
+                    autorizacao.DataProximoPagamento,
+                    autorizacao.DataAutorizacao,
+                    autorizacao.DataCancelamento
                 });
             }
 
@@ -521,11 +542,11 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
                             $"WHERE idAutorizacao = @IdAutorizacao AND " +
                             "idRecorrencia = @IdRecorrencia";
 
-            var items = await _dbContext.QueryAsync<AutorizacaoRecorrenciaDetalhes>(sqlQuery, data);
+            var items = await _dbContext.QueryAsync<AutorizacaoRecorrencia>(sqlQuery, data);
 
             return new AutorizacaoRecNonPagination()
             {
-                Data = items.First()
+                Data = items.FirstOrDefault()
             };
         }
 

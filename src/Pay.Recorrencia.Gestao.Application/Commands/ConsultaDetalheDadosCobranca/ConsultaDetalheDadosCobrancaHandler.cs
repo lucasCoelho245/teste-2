@@ -23,9 +23,6 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.ConsultaDetalheDadosCobran
 
         public async Task<DetalheDadosCobranca> Handle(ConsultaDetalheDadosCobrancaCommand request, CancellationToken cancellationToken)
         {
-            if (!CamposValidos(request))
-                throw new ArgumentException("ERRO-PIXAUTO-017");
-
             var pixAgendados = await ListarPixAgendados(new ListarPixAgendadosRequestDTO
             {
                 NrSpb = "61033106",
@@ -56,22 +53,6 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.ConsultaDetalheDadosCobran
             };
         }
 
-        public static bool CamposValidos(ConsultaDetalheDadosCobrancaCommand request)
-        {
-            string[] idTipoContaPagadorTipos = { "CACC", "SLRY", "SVGS", "TRAN", "CAHO", "CCTE", "DBMO", "DBMI", "DORD" };
-
-            var idTipoContaPagadorInvalido = !idTipoContaPagadorTipos.Contains(request.IdTipoContaPagador);
-
-            var camposObrigatoriosNulosOuVazios = (string.IsNullOrEmpty(request.ContaUsuarioPagador)
-                    || string.IsNullOrEmpty(request.IdRecorrencia)
-                    || string.IsNullOrEmpty(request.IdOperacao));
-
-            if (idTipoContaPagadorInvalido || camposObrigatoriosNulosOuVazios)
-                return false;
-
-            return true;
-        }
-
         public async Task<IEnumerable<ListarPixAgendadosResponseDTO>> ListarPixAgendados(ListarPixAgendadosRequestDTO body)
         {
             //var response = await _httpClient.PostAsJsonAsync("api/consulta/ListarPixAgendados", body);
@@ -84,6 +65,12 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.ConsultaDetalheDadosCobran
             {
                 new ListarPixAgendadosResponseDTO
                 {
+                    ListaOperacaoCompleta = new List<string>
+                    {
+                        "1",
+                        "2",
+                        "3"
+                    },
                     IdOperacao = "12345",
                     IdRecorrencia = "67890",
                     VlOperacao = 150.75m,
@@ -136,6 +123,8 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.ConsultaDetalheDadosCobran
                             Descricao = "Erro no processamento"
                         }
                     },
+                    Codigo = "001",
+                    Descricao = "Mock",
                     TpFinalidade = "Pagamento",
                     LstTipoValor = new List<ListarPixAgendadosTipoValorResponseDTO>
                     {
@@ -150,6 +139,8 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.ConsultaDetalheDadosCobran
                             TpPagto = "TED"
                         }
                     },
+                    VlTipo = "VlTipo",
+                    TpPagmto = "TpPagmto",
                     ParcelaAtual = 1,
                     TotalParcelas = 3,
                     MotivoDevolucao = "Saldo insuficiente"

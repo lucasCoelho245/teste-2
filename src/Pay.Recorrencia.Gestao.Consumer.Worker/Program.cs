@@ -24,6 +24,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddScoped<IAtualizarAutorizacaoService, AtualizarAutorizacaoService>();
         services.AddScoped<IInserirAutorizacaoRecorrenciaService, InserirAutorizacaoRecorrenciaService>();
         services.AddScoped<IAtualizarAutorizacaoRecorrenciaService, AtualizarAutorizacaoRecorrenciaService>();
+        services.AddScoped<IJornadaService, JornadaService>();
 
         // Kafka Consumer
         services.RegisterKafkaConsumerServices(context.Configuration, typeof(Program).Assembly);

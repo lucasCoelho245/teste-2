@@ -1,14 +1,13 @@
-﻿using MediatR;
+﻿using System.Text.Json.Serialization;
+using MediatR;
 using Pay.Recorrencia.Gestao.Application.Response;
 using Pay.Recorrencia.Gestao.Domain.Entities;
 using Pay.Recorrencia.Gestao.Domain.Enums;
 
 namespace Pay.Recorrencia.Gestao.Application.Commands.IncluirAutorizacaoRecorrencia
 {
-    public class InserirAutorizacaoRecorrenciaCommand : IRequest<MensagemPadraoResponse>
+    public class InserirAutorizacaoRecorrenciaCommand : IRequest<MensagemPadraoResponse>, IInserirAutorizacaoRecorrenciaCommand
     {
-        public string IdAutorizacao { get; set; }
-
         public string IdRecorrencia { get; set; }
 
         public string SituacaoRecorrencia { get; set; }
@@ -35,7 +34,7 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.IncluirAutorizacaoRecorren
 
         public string ParticipanteDoUsuarioRecebedor { get; set; }
 
-        public string CodMunIBGE { get; set; }
+        public string? CodMunIBGE { get; set; }
 
         public string CpfCnpjUsuarioPagador { get; set; }
 
@@ -68,15 +67,15 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.IncluirAutorizacaoRecorren
         public string TpRetentativa { get; set; }
 
         public DateTime? DataProximoPagamento { get; set; }
-
+        public DateTime? DataAutorizacao { get; set; }
+        public DateTime? DataCancelamento { get; set; }
         public InserirAutorizacaoRecorrenciaCommand()
         {
-            
+
         }
 
         public InserirAutorizacaoRecorrenciaCommand(SolicitacaoAutorizacaoRecorrencia solicitacaoAutorizacaoRecorrencia, string idAutorizacao)
         {
-            IdAutorizacao = idAutorizacao;
             IdRecorrencia = solicitacaoAutorizacaoRecorrencia.IdRecorrencia;
             TipoRecorrencia = solicitacaoAutorizacaoRecorrencia.TipoRecorrencia;
             TipoFrequencia = solicitacaoAutorizacaoRecorrencia.TipoFrequencia;

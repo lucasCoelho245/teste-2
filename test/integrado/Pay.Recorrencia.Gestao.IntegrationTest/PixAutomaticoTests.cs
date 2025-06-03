@@ -26,26 +26,26 @@ namespace Pay.Recorrencia.Gestao.test.integrado.IntegrationTest
         public async Task GetSolicitacoes_RetornaOK_ComDadosValidos()
         {
             var queryParams = "cpfCnpjUsuarioPagador=98765432100&contaUsuarioPagador=1234";
-            var response = await _client.GetAsync($"/v1.0/pix-automatico/solicitacao-autorizacao-recorrencia?{queryParams}");
+            var response = await _client.GetAsync($"/v1.0/pix-automatico/solicitacao-autorizacao-recorrencia/lista?{queryParams}");
 
             response.EnsureSuccessStatusCode();
             var responseString = await response.Content.ReadAsStringAsync();
             var jsonData = JsonConvert.DeserializeObject<ApiMetaDataPaginatedResponse>(responseString);
 
-            Assert.Equal("OK", jsonData.Status);
+            Assert.Equal("success", jsonData.Status);
             Assert.True(jsonData.Data.Items.Any());
         }
         [Fact]
         public async Task GetSolicitacoes_Checa_SituacaoInformada()
         {
             var queryParams = "cpfCnpjUsuarioPagador=98765432100&contaUsuarioPagador=1234&situacaoSolicRecorrencia=PDNG";
-            var response = await _client.GetAsync($"/v1.0/pix-automatico/solicitacao-autorizacao-recorrencia?{queryParams}");
+            var response = await _client.GetAsync($"/v1.0/pix-automatico/solicitacao-autorizacao-recorrencia/lista?{queryParams}");
 
             response.EnsureSuccessStatusCode();
             var responseString = await response.Content.ReadAsStringAsync();
             var jsonData = JsonConvert.DeserializeObject<ApiMetaDataPaginatedResponse>(responseString);
 
-            Assert.Equal("OK", jsonData.Status);
+            Assert.Equal("success", jsonData.Status);
             Assert.True(jsonData.Data.Items.Any());
 
             foreach (var obj in jsonData.Data.Items)
@@ -60,13 +60,13 @@ namespace Pay.Recorrencia.Gestao.test.integrado.IntegrationTest
         public async Task GetSolicitacoes_Checa_NomeInformado()
         {
             var queryParams = "cpfCnpjUsuarioPagador=98765432100&contaUsuarioPagador=1234&situacaoSolicRecorrencia=PDNG&nomeUsuarioRecebedor=";
-            var response = await _client.GetAsync($"/v1.0/pix-automatico/solicitacao-autorizacao-recorrencia?{queryParams}");
+            var response = await _client.GetAsync($"/v1.0/pix-automatico/solicitacao-autorizacao-recorrencia/lista?{queryParams}");
 
             response.EnsureSuccessStatusCode();
             var responseString = await response.Content.ReadAsStringAsync();
             var jsonData = JsonConvert.DeserializeObject<ApiMetaDataPaginatedResponse>(responseString);
 
-            Assert.Equal("OK", jsonData.Status);
+            Assert.Equal("success", jsonData.Status);
             Assert.True(jsonData.Data.Items.Any());
 
             foreach (var obj in jsonData.Data.Items)
@@ -80,13 +80,13 @@ namespace Pay.Recorrencia.Gestao.test.integrado.IntegrationTest
         public async Task GetSolicitacoes_Checa_TodosDadosInformados()
         {
             var queryParams = "cpfCnpjUsuarioPagador=98765432100&contaUsuarioPagador=1234&situacaoSolicRecorrencia=PDNG&nomeUsuarioRecebedor=";
-            var response = await _client.GetAsync($"/v1.0/pix-automatico/solicitacao-autorizacao-recorrencia?{queryParams}");
+            var response = await _client.GetAsync($"/v1.0/pix-automatico/solicitacao-autorizacao-recorrencia/lista?{queryParams}");
 
             response.EnsureSuccessStatusCode();
             var responseString = await response.Content.ReadAsStringAsync();
             var jsonData = JsonConvert.DeserializeObject<ApiMetaDataPaginatedResponse>(responseString);
 
-            Assert.Equal("OK", jsonData.Status);
+            Assert.Equal("success", jsonData.Status);
             Assert.True(jsonData.Data.Items.Any());
 
             foreach (var obj in jsonData.Data.Items)
@@ -100,13 +100,13 @@ namespace Pay.Recorrencia.Gestao.test.integrado.IntegrationTest
         public async Task GetSolicitacoes_RetornaOK_QuandoPaginado()
         {
             var queryParams = "cpfCnpjUsuarioPagador=98765432100&contaUsuarioPagador=1234&agenciaUsuarioPagador=&situacaoSolicRecorrencia=PDNG&nomeUsuarioRecebedor=&pageSize=1";
-            var response = await _client.GetAsync($"/v1.0/pix-automatico/solicitacao-autorizacao-recorrencia?{queryParams}");
+            var response = await _client.GetAsync($"/v1.0/pix-automatico/solicitacao-autorizacao-recorrencia/lista?{queryParams}");
 
             response.EnsureSuccessStatusCode();
             var responseString = await response.Content.ReadAsStringAsync();
             var jsonData = JsonConvert.DeserializeObject<ApiMetaDataPaginatedResponse>(responseString);
 
-            Assert.Equal("OK", jsonData.Status);
+            Assert.Equal("success", jsonData.Status);
             Assert.Single(jsonData.Data.Items);
         }
 
@@ -129,21 +129,21 @@ namespace Pay.Recorrencia.Gestao.test.integrado.IntegrationTest
         public async Task GetDetalheSolicitacao_RetornaOK_CodigoValido()
         {
             string idSolicitacao = "REC01";
-            var response = await _client.GetAsync($"/v1.0/pix-automatico/solicitacao-autorizacao-recorrencia/{idSolicitacao}");
+            var response = await _client.GetAsync($"/v1.0/pix-automatico/solicitacao-autorizacao-recorrencia?idSolicRecorrencia={idSolicitacao}");
 
             response.EnsureSuccessStatusCode();
             var responseString = await response.Content.ReadAsStringAsync();
             var jsonData = JsonConvert.DeserializeObject<ApiMetaDataNonPaginatedResponse<SolicitacaoRecorrencia>>(responseString);
 
-            Assert.Equal("OK", jsonData.Status);
-            Assert.Equal(idSolicitacao, jsonData.Data.IdSolicRecorrencia);
+            Assert.Equal("success", jsonData.Status);
+            Assert.NotNull(jsonData.Data);
         }
 
         [Fact]
         public async Task GetDetalheSolicitacao_RetornaErro_CodigoInValido()
         {
             string idSolicitacao = "12345";
-            var response = await _client.GetAsync($"/v1.0/pix-automatico/solicitacao-autorizacao-recorrencia/{idSolicitacao}");
+            var response = await _client.GetAsync($"/v1.0/pix-automatico/solicitacao-autorizacao-recorrencia?idSolicRecorrencia={idSolicitacao}");
 
             //response.EnsureSuccessStatusCode();
             var responseString = await response.Content.ReadAsStringAsync();

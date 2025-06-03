@@ -3,6 +3,7 @@ using System.Net;
 using MediatR;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Mvc;
+using Pay.Recorrencia.Gestao.Application.Commands.ControleJornada;
 using Pay.Recorrencia.Gestao.Application.Query.ControleJornada.Detalhes;
 using Pay.Recorrencia.Gestao.Application.Query.ControleJornada.Lista;
 using Pay.Recorrencia.Gestao.Application.Query.SolicAutorizacaoRec.Detalhes;
@@ -133,5 +134,45 @@ public class JornadaController : ControllerBase
             });
         }
 
+    }
+
+    [HttpPut]
+    public async Task<IActionResult> Put([FromBody] AtualizarControleJornadaCommand command)
+    {
+        MensagemPadraoResponse response;
+        try
+        {
+            if (!ModelState.IsValid)
+                return StatusCode(StatusCodes.Status400BadRequest, new MensagemPadraoResponse(StatusCodes.Status400BadRequest, string.Empty, "Erro de validação nos dados fornecidos."));
+
+            response = await _mediator.Send(command);
+
+            return response.StatusCode == 200 ? Ok(response) : BadRequest(response);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new MensagemPadraoResponse(StatusCodes.Status500InternalServerError, string.Empty, ex.Message.ToString()));
+            throw;
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Post([FromBody] IncluirControleJornadaCommand command)
+    {
+        MensagemPadraoResponse response;
+        try
+        {
+            if (!ModelState.IsValid)
+                return StatusCode(StatusCodes.Status400BadRequest, new MensagemPadraoResponse(StatusCodes.Status400BadRequest, string.Empty, "Erro de validação nos dados fornecidos."));
+
+            response = await _mediator.Send(command);
+
+            return response.StatusCode == 200 ? Ok(response) : BadRequest(response);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new MensagemPadraoResponse(StatusCodes.Status500InternalServerError, string.Empty, ex.Message.ToString()));
+            throw;
+        }
     }
 }

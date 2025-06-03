@@ -34,14 +34,18 @@
     }
     public class SolicAutorizacaoRecNonPagination
     {
-        public SolicitacaoRecorrencia Data { get; set; }
+        public SolicitacaoAutorizacaoRecorrenciaDetalhes Data { get; set; }
     }
 
     public class SolicAutorizacaoRecList
     {
+        public string CpfCnpjUsuarioPagador { get; set; }
         public string IdSolicRecorrencia { get; set; }
         public string NomeUsuarioRecebedor { get; set; }
         public string SituacaoSolicRecorrencia { get; set; }
+        public DateTime DataHoraExpiracaoSolicRecorr { get; set; }
+        public string NomeDevedor { get; set; }
+        public string CpfCnpjDevedor { get; set; }
     }
     public class ListaSolicAutorizacaoRecPaginada
     {

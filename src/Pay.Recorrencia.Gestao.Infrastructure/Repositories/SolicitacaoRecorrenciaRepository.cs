@@ -23,7 +23,6 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
             try
             {
                 string query = @"SELECT idSolicRecorrencia AS IdSolicRecorrencia,
-                                        idAutorizacao AS IdAutorizacao,
                                         idRecorrencia AS IdRecorrencia,
                                         tipoRecorrencia AS TipoRecorrencia,
                                         tipoFrequencia AS TipoFrequencia,
@@ -144,14 +143,51 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
             {
                 //Logger.Information("Starting update transaction");
                 string query = @"UPDATE [dbo].[SOLICITACAO_AUTORIZACAO_RECORRENCIA]
-                                    SET [idAutorizacao] = @idAutorizacao,
-                                        [situacaoSolicRecorrencia] = @situacaoSolicRecorrencia,
-                                        [dataUltimaAtualizacao] = @dataUltimaAtualizacao
-                                  WHERE [idSolicRecorrencia] = @idSolicRecorrencia";
+                                    SET [situacaoSolicRecorrencia] = @situacaoSolicRecorrencia
+                                        ,[dataUltimaAtualizacao] = @dataUltimaAtualizacao";
+
+                if (!String.IsNullOrEmpty(data.IdAutorizacao))
+                {
+                    query += @",[idAutorizacao] = @idAutorizacao ";
+                }
+
+                query += @"WHERE [idSolicRecorrencia] = @idSolicRecorrencia";
+                
                 session.Execute(query, data);
                 session.Commit();
 
                 await Task.CompletedTask;
+            }
+            catch (Exception)
+            {
+                session.Rollback();
+                //Logger.Information("Finish update transaction - Error: @e.Message", e.Message);
+                throw;
+            }
+        }
+        
+        public async Task<string> CancelarSolicitacaoRecorrencia(SolicitacaoAutorizacaoRecorrenciaUpdateDTO data)
+        {
+            using var session = _dataAccess.CreateSession();
+            session.Begin();
+            try
+            {
+                //Logger.Information("Starting update transaction");
+                string query = @"UPDATE [dbo].[SOLICITACAO_AUTORIZACAO_RECORRENCIA]
+                                    SET [situacaoSolicRecorrencia] = @situacaoSolicRecorrencia
+                                        ,[dataUltimaAtualizacao] = @dataUltimaAtualizacao";
+
+                if (!String.IsNullOrEmpty(data.IdAutorizacao))
+                {
+                    query += @",[idAutorizacao] = @idAutorizacao ";
+                }
+
+                query += @"WHERE [idSolicRecorrencia] = @idSolicRecorrencia";
+                
+                session.Execute(query, data);
+                session.Commit();
+
+                return await Task.FromResult("OK");
             }
             catch (Exception)
             {
@@ -168,7 +204,11 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
 
             string sqlQuery = $"SELECT idSolicRecorrencia IdSolicRecorrencia," +
                             "nomeUsuarioRecebedor NomeUsuarioRecebedor, " +
-                            "situacaoSolicRecorrencia SituacaoSolicRecorrencia " +
+                            "situacaoSolicRecorrencia SituacaoSolicRecorrencia, " +
+                            "cpfCnpjUsuarioPagador CpfCnpjUsuarioPagador, " +
+                            "nomeDevedor NomeDevedor, " +
+                            "dataHoraExpiracaoSolicRecorr DataHoraExpiracaoSolicRecorr, " +
+                            "cpfCnpjDevedor CpfCnpjDevedor " +
                             "FROM [dbo].[SOLICITACAO_AUTORIZACAO_RECORRENCIA] " +
                             "WHERE cpfCnpjUsuarioPagador = @CpfCnpjUsuarioPagador " +
                             $"AND contaUsuarioPagador = {int.Parse(data.ContaUsuarioPagador)}";
@@ -188,6 +228,11 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
                 sqlCount += $" AND agenciaUsuarioPagador = {int.Parse(data.AgenciaUsuarioPagador)}";
                 sqlQuery += $" AND agenciaUsuarioPagador = {int.Parse(data.AgenciaUsuarioPagador)}"; ;
             }
+            if(data.DtExpiracaoInicio != DateTime.MinValue && data.DtExpiracaoFim != DateTime.MinValue)
+            {
+                sqlCount += $" AND dataHoraExpiracaoSolicRecorr BETWEEN @DtExpiracaoInicio AND @DtExpiracaoFim";
+                sqlQuery += $" AND dataHoraExpiracaoSolicRecorr BETWEEN @DtExpiracaoInicio AND @DtExpiracaoFim";
+            }
 
             int offset = (data.Page - 1) * data.PageSize;
 
@@ -205,14 +250,23 @@ namespace Pay.Recorrencia.Gestao.Infrastructure.Repositories
         }
         public async Task<SolicAutorizacaoRecNonPagination> GetAsync(GetSolicAutorizacaoRecDTOPaginada data)
         {
-            string sqlQuery = $"SELECT * FROM [dbo].[SOLICITACAO_AUTORIZACAO_RECORRENCIA] " +
-                            "WHERE idSolicRecorrencia = @IdSolicRecorrencia";
+            string sqlQuery = $"SELECT * FROM [dbo].[SOLICITACAO_AUTORIZACAO_RECORRENCIA] ";
+            
+            if(data.IdSolicRecorrencia != null)
+            {
+                sqlQuery += "WHERE idSolicRecorrencia = @IdSolicRecorrencia";
+            }
+            else if(data.IdRecorrencia != null)
+            {
+                sqlQuery += "WHERE idRecorrencia = @IdRecorrencia";
+            }
 
-            var items = await _dbContext.QueryAsync<SolicitacaoRecorrencia>(sqlQuery, data);
+            var items = await _dbContext.QueryAsync<SolicitacaoAutorizacaoRecorrenciaDetalhes>(sqlQuery, data);
 
             return new SolicAutorizacaoRecNonPagination()
             {
-                Data = items.First()            };
+                Data = items.FirstOrDefault()
+            };
         }
 
         public async Task<SolicitacaoRecorrencia> GetById(string id)

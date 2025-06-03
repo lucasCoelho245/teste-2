@@ -9,6 +9,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="AutoMapper" Version="12.0.0" />
 		<PackageReference Include="AspNetCore.HealthChecks.Oracle" Version="8.0.1" />
 		<PackageReference Include="DataAccess" Version="3.0.1" />
 		<PackageReference Include="FluentValidation" Version="11.10.0" />

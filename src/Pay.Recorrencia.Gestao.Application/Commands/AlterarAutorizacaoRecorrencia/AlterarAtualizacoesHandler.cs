@@ -10,10 +10,10 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AlterarAutorizacaoRecorren
         private IAtualizarAutorizacaoService _atualizarAutorizacaoService { get; }
 
         //public UpdateAtualizacoesHandler(ILogger logger, IAutorizacaoRecorrenciaRepository atualizacoesRepository)
-        public AlterarAtualizacoesHandler(IAtualizarAutorizacaoService atualizarAutorizacaoService)
+        public AlterarAtualizacoesHandler(IAtualizarAutorizacaoService atuaizarAutorizacaoService)
         {
             //Logger = logger;
-            _atualizarAutorizacaoService = atualizarAutorizacaoService;
+            _atualizarAutorizacaoService = atuaizarAutorizacaoService;
         }
 
         public async Task<MensagemPadraoResponse> Handle(AlterarAutorizacaoCommand request, CancellationToken cancellationToken)

@@ -26,6 +26,7 @@ namespace Pay.Recorrencia.Gestao.Crosscutting.Extensions
             services.AddScoped<IInformacaoSolicitacaoRepository, InformacaoSolicitacaoRepository>();
             services.AddScoped<IControleJornadaRepository, ControleJornadaRepository>();
             services.AddScoped<ISolicitacaoSequencialRepository, SolicitacaoSequencialRepository>();
+            services.AddScoped<ITemplateMensagemRepository, TemplateMensagemRepository>();
             services.AddTransient<ISolicitacaoRecorrenciaRepository, SolicitacaoRecorrenciaRepository>();
             services.AddTransient<IMockSolicitacaoRecorrenciaRepository, MockSolicitacaoRecorrenciaRepository>();
             services.AddTransient<IMockAutorizacaoRecorrenciaRepository, MockAutorizacaoRecorrenciaRepository>();

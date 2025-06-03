@@ -240,7 +240,7 @@ namespace Pay.Recorrencia.Gestao.Consumer.Worker.Consumer.PayPagamentoProcessado
             try
             {
                 var message = MapToProcessamentoRecorrencia(dados, motivoRejeicao);
-                string topicProducer = _inputParameterKafka?.Producer?.Topic ?? string.Empty;
+                string topicProducer = _inputParameterKafka?.Producer?.TopicRecorrenciaAceitaRejeitada ?? string.Empty;
                 var json = JsonConvert.SerializeObject(message, Formatting.Indented);
                 _kafkaProducerService.SendMessageAsync(topicProducer, json);
                 _logger.LogInformation("A resposta da recorrência foi enviada.");

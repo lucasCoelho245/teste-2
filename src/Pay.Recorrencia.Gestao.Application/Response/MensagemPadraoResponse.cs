@@ -1,8 +1,18 @@
-﻿namespace Pay.Recorrencia.Gestao.Application.Response
+﻿using System.Text.Json.Serialization;
+
+namespace Pay.Recorrencia.Gestao.Application.Response
 {
     public class MensagemPadraoResponse
     {
-        public MensagemPadraoResponse(int statusCode, string codigoInterno, string mensagemErro)
+        public string? Status { get; set; }
+        public int StatusCode { get; set; }
+        public Erro Error { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? IdAutorizacaoResponse { get; set; }
+
+
+        public MensagemPadraoResponse(int statusCode, string codigoInterno, string mensagemErro, string? idAutorizacao = null)
         {
             Status = statusCode.Equals(200) ? "OK" : "NOK";
             StatusCode = statusCode;
@@ -11,11 +21,9 @@
                 Code = codigoInterno,
                 Message = mensagemErro
             };
+            IdAutorizacaoResponse = idAutorizacao;
         }
 
-        public string? Status { get; set; }
-        public int StatusCode { get; set; }
-        public Erro Error { get; set; }
     }
 
 

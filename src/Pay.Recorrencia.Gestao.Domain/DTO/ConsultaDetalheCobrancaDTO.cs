@@ -14,12 +14,13 @@ namespace Pay.Recorrencia.Gestao.Domain.DTO
         public string? Agencia { get; set; }
         public string IdTipoConta { get; set; }
         public string Conta { get; set; }
-        public string IdRecorrencia { get; set; }
+        public string? IdRecorrencia { get; set; }
         public int Situacao { get; set; } = 20;
     }
 
     public class ListarPixAgendadosResponseDTO
     {
+        public List<string> ListaOperacaoCompleta { get; set; }
         public string IdOperacao { get; set; }
         public string IdRecorrencia { get; set; }
         public decimal VlOperacao { get; set; }
@@ -52,16 +53,20 @@ namespace Pay.Recorrencia.Gestao.Domain.DTO
         public string IdSpi { get; set; }
         public string IdInstFinanc { get; set; }
         public string IdFilialInst { get; set; }
-        public string NrDoctosGeradoContaJson { get; set; }
         public string NrSpbControlador { get; set; }
         public string NrDocumentoOrigem { get; set; }
+        public string NrDoctosGeradoContaJson { get; set; }
         public string TxChave { get; set; }
         public string TxDescricao { get; set; }
         public string FlDevolucao { get; set; }
         public bool IcPermiteAlterarValor { get; set; }
         public IEnumerable<ListarPixAgendadosRetornoResponseDTO> LstRetorno { get; set; }
+        public string Codigo { get; set; }
+        public string Descricao { get; set; }
         public string TpFinalidade { get; set; }
         public IEnumerable<ListarPixAgendadosTipoValorResponseDTO> LstTipoValor { get; set; }
+        public string VlTipo { get; set; }
+        public string TpPagmto { get; set; }
         public int ParcelaAtual { get; set; }
         public int TotalParcelas { get; set; }
         public string MotivoDevolucao { get; set; }

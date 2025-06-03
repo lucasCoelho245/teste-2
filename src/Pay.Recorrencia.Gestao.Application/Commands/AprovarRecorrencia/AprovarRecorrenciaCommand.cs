@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MediatR;
+using Pay.Recorrencia.Gestao.Application.Commands.IncluirAutorizacaoRecorrencia;
 using Pay.Recorrencia.Gestao.Application.Response;
 using Pay.Recorrencia.Gestao.Domain.Enums;
 
@@ -28,7 +29,7 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarRecorrencia
         public DateTime? DataFinalRecorrencia { get; set; }
 
         [RegularExpression("BRL", ErrorMessage = "O valor de CodigoMoedaAutorizacaoRecorrencia deve ser 'BRL'.")]
-        public string? CodigoMoedaSolicRecorr { get; set; }
+        public string? CodigoMoedaSolicRecorr { get; set; } = "BRL";
 
         public decimal? ValorFixoSolicRecorrencia { get; set; }
 
@@ -80,6 +81,8 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarRecorrencia
         [Required]
         [Range(1, 4, ErrorMessage = "TpJornada deve estar entre 1 e 4.")]
         public TipoJornada TpJornada { get; set; }
+    
+        public string? IdSolicRecorrencia { get; set; }
     }
 
     public class IncluirAutorizaCaoRecorrBanco : AprovarRecorrenciaCommand

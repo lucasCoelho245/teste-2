@@ -3,8 +3,9 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Pay.Recorrencia.Gestao.Api.Filters;
 using Pay.Recorrencia.Gestao.Application.Commands.AlterarAutorizacaoRecorrencia;
+using Pay.Recorrencia.Gestao.Application.Commands.AlterarAutorizacaoRecorrenciaCanal;
 using Pay.Recorrencia.Gestao.Application.Commands.AprovarRecorrencia;
-using Pay.Recorrencia.Gestao.Application.Commands.AprovarSolicitacaoRecorrencia;
+using Pay.Recorrencia.Gestao.Application.Commands.CancelarAutorizacaoRecorrencia;
 using Pay.Recorrencia.Gestao.Application.Commands.IncluirAutorizacaoRecorrencia;
 using Pay.Recorrencia.Gestao.Application.Query.AutorizacaoRec.Detalhes;
 using Pay.Recorrencia.Gestao.Application.Query.AutorizacaoRec.Lista;
@@ -32,48 +33,34 @@ namespace Pay.Recorrencia.Gestao.Api.Controllers
             //Logger = logger;
         }
 
+        [HttpPatch("canal")]
+        [SwaggerOperation(Summary = "Altera Autorização de Recorrência (Canal)", Description = "Permite a alteração de informações de uma Autorização de Recorrência iniciada por um usuário no canal.")]
+        [SwaggerResponse(200, Type = typeof(ApiSimpleResponse))]
+        [SwaggerResponse(400)]
+        public async Task<IActionResult> AlterarAutorizacaoCanal([FromBody] AlterarAutorizacaoRecorrenciaCanalCommand command)
+        {
+            try
+            {
+                var response = await Mediator.Send(command);
+
+                if (response is null)
+                {
+                    return NotFound(new ApiSimpleResponse("NOK", "Autorização de recorrência não encontrada."));
+                }
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ApiSimpleResponse("NOK", ex.Message));
+            }
+        }
+
         [HttpPost()]
         [SwaggerOperation(Summary = "Insere a Autorização Recorrência", Description = "Insere uma nova Autorização Recorrência.")]
         [SwaggerResponse(200, Type = typeof(AutorizacaoRecorrencia))]
         [SwaggerResponse(400)]
         public async Task<ActionResult> InsereDadosAutorizacaoRecorrencia(InserirAutorizacaoRecorrenciaCommand command)
-        {
-            try
-            {
-                if (ValidaInformacoesRecebidas(command))
-                {
-                    var response = await Mediator.Send(command);
-                    //Logger.Information("Response: {@Response}", response);
-                    if (response is null)
-                    {
-                        //Logger.Warning("Autorização Recorrência não gravada.");
-                        return BadRequest();
-                    }
-
-                    if (!response.StatusCode.Equals(StatusCodes.Status200OK))
-                    {
-                        return BadRequest(response);
-                    }
-
-                    //Logger.Information("Autorização Recorrência gravada com sucesso. {@Response}", response);
-                    return Ok(response);
-                }
-                else
-                {
-                    return BadRequest("Campos não preenchidos corretamente.");
-                }
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
-
-        [HttpPost("aprovar")]
-        [SwaggerOperation(Summary = "Aprova a Autorização Recorrência", Description = "Aprova uma Autorização Recorrência.")]
-        [SwaggerResponse(200, Type = typeof(AutorizacaoRecorrencia))]
-        [SwaggerResponse(400)]
-        public async Task<ActionResult> AprovarAutorizacaoRecorrencia(AprovarRecorrenciaCommand command)
         {
             try
             {
@@ -92,7 +79,37 @@ namespace Pay.Recorrencia.Gestao.Api.Controllers
 
                 //Logger.Information("Autorização Recorrência gravada com sucesso. {@Response}", response);
                 return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
+        [HttpPost("aprovar")]
+        [SwaggerOperation(Summary = "Aprova a Autorização Recorrência", Description = "Aprova uma Autorização Recorrência.")]
+        [SwaggerResponse(200, Type = typeof(AutorizacaoRecorrencia))]
+        [SwaggerResponse(400)]
+        public async Task<ActionResult> AprovarAutorizacaoRecorrencia(AprovarRecorrenciaCommand command)
+        {
+
+            try
+            {
+                var response = await Mediator.Send(command);
+                //Logger.Information("Response: {@Response}", response);
+                if (response is null)
+                {
+                    //Logger.Warning("Autorização Recorrência não gravada.");
+                    return BadRequest();
+                }
+
+                if (!response.StatusCode.Equals(StatusCodes.Status200OK))
+                {
+                    return BadRequest(response);
+                }
+
+                //Logger.Information("Autorização Recorrência gravada com sucesso. {@Response}", response);
+                return Ok(response);
             }
             catch (Exception ex)
             {
@@ -131,14 +148,39 @@ namespace Pay.Recorrencia.Gestao.Api.Controllers
                 return BadRequest(retorno);
             }
         }
+        
+        [HttpPost("cancelar")]
+        [SwaggerOperation(Summary = "Cancela a Autorização Recorrência", Description = "Cancela a Autorização Recorrência.")]
+        [SwaggerResponse(200, Type = typeof(AutorizacaoRecorrencia))]
+        [SwaggerResponse(400)]
+        public async Task<ActionResult> CancelarSolicitarAutorizacaoRecorrencia(CancelarAutorizacaoRecorrenciaCommand command)
+        {
+            try
+            {
+                var response = await Mediator.Send(command);
+                //Logger.Information("Response: {@Response}", response);
+                if (response is null)
+                {
+                    //Logger.Warning("Autorização Recorrência não foi cancelada.");
+                    return BadRequest();
+                }
 
+                if (!response.StatusCode.Equals(StatusCodes.Status200OK))
+                {
+                    return BadRequest(response);
+                }
 
+                //Logger.Information("Cancelamento da Recorrência efetuada com sucesso. {@Response}", response);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
         private bool ValidaInformacoesRecebidas(InserirAutorizacaoRecorrenciaCommand autorizacaoRecorrenciaCommand)
         {
-            if (autorizacaoRecorrenciaCommand.IdAutorizacao.ToString() == string.Empty)
-                return false;
-
             if (autorizacaoRecorrenciaCommand.IdRecorrencia.ToString() == string.Empty)
                 return false;
 
@@ -228,7 +270,7 @@ namespace Pay.Recorrencia.Gestao.Api.Controllers
                                   && autorizacaoRecorrenciaCommand.TipoSituacaoRecorrencia != "CFDB"
                                   && autorizacaoRecorrenciaCommand.TipoSituacaoRecorrencia != "CCLD")
                 return false;
-            
+
             if (autorizacaoRecorrenciaCommand.TpRetentativa.Equals("NAO_PERMITE") && autorizacaoRecorrenciaCommand.TpRetentativa.Equals("PERMITE_3R_7D"))
                 return false;
 
@@ -254,8 +296,15 @@ namespace Pay.Recorrencia.Gestao.Api.Controllers
                 autorizacaoRecorrenciaCommand.TpRetentativa != "PERMITE_3R_7D")
                 return false;
 
+            if (DateTime.Now < autorizacaoRecorrenciaCommand.DataHoraCriacaoRecorr) // ASSUMINDO QUE DATAAUTORIZACAO É O MOMENTO DA CHAMADA À API
+                return false;
+
+            if (autorizacaoRecorrenciaCommand.DataCancelamento < autorizacaoRecorrenciaCommand.DataHoraCriacaoRecorr)
+                return false;
+
             return true;
         }
+
         [HttpGet]
         [SwaggerOperation(Summary = "Retorna autorizações")]
         [SwaggerResponse(200, Type = typeof(TypedApiMetaDataPaginatedResponse<AutorizacaoRecList>))]
@@ -279,7 +328,7 @@ namespace Pay.Recorrencia.Gestao.Api.Controllers
                 var response = await Mediator.Send(request);
                 return Ok(response);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return StatusCode(404, new ErrorResponse
                 {
@@ -293,6 +342,7 @@ namespace Pay.Recorrencia.Gestao.Api.Controllers
                 });
             }
         }
+
         [HttpGet("{idAutorizacao}/recorrencia/{idRecorrencia}")]
         [SwaggerOperation(Summary = "Retorna todas as informações de uma solicitação")]
         [SwaggerResponse(200, Type = typeof(TypedApiMetaDataNonPaginatedResponse<AutorizacaoRecorrencia>))]
@@ -311,7 +361,7 @@ namespace Pay.Recorrencia.Gestao.Api.Controllers
                 var response = await Mediator.Send(request);
                 return Ok(response);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return StatusCode(404, new ErrorResponse
                 {

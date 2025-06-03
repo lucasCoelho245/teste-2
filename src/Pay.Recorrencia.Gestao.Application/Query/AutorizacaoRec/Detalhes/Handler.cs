@@ -7,10 +7,10 @@ namespace Pay.Recorrencia.Gestao.Application.Query.AutorizacaoRec.Detalhes
 {
     public class DetalhesAutorizacaoRecHandler : IRequestHandler<DetalhesAutorizacaoRecRequest, DetalhesAutorizacaoRecResponse>
     {
-        private IMockAutorizacaoRecorrenciaRepository _repository { get; }
+        private IAutorizacaoRecorrenciaRepository _repository { get; }
 
         public DetalhesAutorizacaoRecHandler(
-            IMockAutorizacaoRecorrenciaRepository repository)
+            IAutorizacaoRecorrenciaRepository repository)
         {
             _repository = repository; 
         }
@@ -23,7 +23,7 @@ namespace Pay.Recorrencia.Gestao.Application.Query.AutorizacaoRec.Detalhes
 
             var response = new DetalhesAutorizacaoRecResponse()
             {
-                Status = "OK",
+                Status = "success",
                 StatusCode = 200,
                 Data = dataFinder.Data,
                 Message = "Operação realizada com sucesso"

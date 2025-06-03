@@ -91,32 +91,33 @@ namespace Pay.Recorrencia.Gestao.Consumer.Worker.Consumer.ControleJornada
             using var scope = _scopeFactory.CreateScope();
             var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
-            //var request = new ListaControleJornadaRequest
-            //{
-            //    TpJornada = dados.TpJornada,
-            //    IdRecorrencia = dados.IdRecorrencia,
-            //    IdE2E = dados.IdFimAFim
-            //};
+            var request = new ListaControleJornadaAgendamentoAutorizacaoRequest
+            {
+                TpJornada = dados.TpJornada,
+                IdRecorrencia = dados.IdRecorrencia,
+                IdE2E = dados.IdE2E
+            };
 
-            //var registros = await mediator.Send(request);
+            var registros = await mediator.Send(request);
 
-            //switch (registros.Data.Items.)
-            //{
-            //    case 0:
-            //        _logger.LogInformation("🟡 Nenhuma jornada encontrada. Ir para cenário 03");
-            //        await IncluirControleAsync(dados);
-            //        break;
+            switch (registros.Data.Items.Count())
+            {
+                case 0:
+                    _logger.LogInformation("🟡 Nenhuma jornada encontrada. Ir para cenário 03");
+                    await IncluirControleAsync(dados);
+                    break;
 
-            //    case 1:
-            //        _logger.LogInformation("🟢 Uma jornada encontrada. Ir para cenário 04");
-            //        await AtualizarControleAsync(registros.First(), dados);
-            //        break;
+                case 1:
+                    _logger.LogInformation("🟢 Uma jornada encontrada. Ir para cenário 04");
+                    var controleJornada = _mapper.Map<ControleJornadaEntrada>(registros.Data.Items.FirstOrDefault());    
+                    await AtualizarControleAsync(controleJornada, dados);
+                    break;
 
-            //    default:
-            //        _logger.LogWarning("🔴 Mais de uma jornada encontrada. Ir para cenário 05");
-            //        await EnviarMensagemErroAsync(dados, "ERRO-PIXAUTO-022");
-            //        break;
-            //}
+                default:
+                    _logger.LogWarning("🔴 Mais de uma jornada encontrada. Ir para cenário 05");
+                    await EnviarMensagemErroAsync(dados, "ERRO-PIXAUTO-022");
+                    break;
+            }
         }
 
         private async Task IncluirControleAsync(ControleJornadaEntrada dados)
@@ -130,7 +131,7 @@ namespace Pay.Recorrencia.Gestao.Consumer.Worker.Consumer.ControleJornada
 
                 var inputControleJornada = new IncluirControleJornadaCommand
                 {
-                    IdE2E = dados.IdFimAFim ?? throw new ArgumentNullException(nameof(dados.IdFimAFim)),
+                    IdE2E = dados.IdE2E ?? throw new ArgumentNullException(nameof(dados.IdE2E)),
                     IdRecorrencia = dados.IdRecorrencia,
                     TpJornada = dados.TpJornada,
                     SituacaoJornada = dados.SituacaoJornada,
@@ -177,7 +178,7 @@ namespace Pay.Recorrencia.Gestao.Consumer.Worker.Consumer.ControleJornada
 
                 var updateControleJornada = new AtualizarControleJornadaCommand
                 {
-                    IdE2E = novaEntrada.IdFimAFim ?? throw new ArgumentNullException(nameof(novaEntrada.IdFimAFim)),
+                    IdE2E = novaEntrada.IdE2E ?? throw new ArgumentNullException(nameof(novaEntrada.IdE2E)),
                     IdRecorrencia = novaEntrada.IdRecorrencia,
                     TpJornada = novaEntrada.TpJornada,
                     SituacaoJornada = novaEntrada.SituacaoJornada,

@@ -14,6 +14,7 @@ using Pay.Recorrencia.Gestao.Application.Query.ControleJornada.Detalhes;
 using Pay.Recorrencia.Gestao.Application.Query.ControleJornada.Lista;
 using Pay.Recorrencia.Gestao.Application.Response;
 using Pay.Recorrencia.Gestao.Application.Services;
+using Pay.Recorrencia.Gestao.Crosscutting.AutoMapper.Profiles;
 using Pay.Recorrencia.Gestao.Crosscutting.Extensions;
 using Pay.Recorrencia.Gestao.Domain.DTO;
 using Pay.Recorrencia.Gestao.Domain.Entities;
@@ -49,6 +50,7 @@ public partial class Program
         // AutoMapper
         // Registro do AutoMapper
         services.AddAutoMapper(typeof(Program));
+        services.AddAutoMapper(typeof(SolicitacaoAutorizacaoRecorrenciaProfile));
 
         // Controllers e API
         services.AddControllers();
@@ -95,14 +97,6 @@ public partial class Program
         {
             options.InvalidModelStateResponseFactory = context =>
             {
-                var errors = context.ModelState
-                    .Where(x => x.Value?.Errors?.Count > 0)
-                    .Select(x => new
-                    {
-                        Field = x.Key,
-                        Errors = x.Value?.Errors.Select(e => e.ErrorMessage)
-                    });
-
                 var response = new MensagemPadraoResponse(StatusCodes.Status400BadRequest, "ERRO-PIXAUTO-002", "Campos não preenchidos corretamente.");
 
                 return new BadRequestObjectResult(response);

@@ -65,12 +65,8 @@ namespace Pay.Recorrencia.Gestao.Domain.Entities
         public string? TpRetentativa { get; set; }
 
         public DateTime? DataProximoPagamento { get; set; }
-    }
-    public class AutorizacaoRecorrenciaDetalhes : AutorizacaoRecorrencia
-    {
-        public string IdAutorizacao { get; set; }
-
-        public string IdRecorrencia { get; set; }
+        public DateTime? DataAutorizacao { get; set; }
+        public DateTime? DataCancelamento { get; set; }
     }
     public class AutorizacaoRecNonPagination
     {

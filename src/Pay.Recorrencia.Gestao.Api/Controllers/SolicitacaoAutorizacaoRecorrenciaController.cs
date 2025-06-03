@@ -81,7 +81,7 @@ namespace Pay.Recorrencia.Gestao.Api.Controllers
             }
         }
 
-        [HttpGet]
+        [HttpGet("lista")]
         [SwaggerOperation(Summary = "Retorna solicitações")]
         [SwaggerResponse(200, Type = typeof(TypedApiMetaDataPaginatedResponse<SolicAutorizacaoRecList>))]
         [SwaggerResponse(404, Type = typeof(ErrorResponse))]
@@ -96,6 +96,8 @@ namespace Pay.Recorrencia.Gestao.Api.Controllers
                 NomeUsuarioRecebedor = data.NomeUsuarioRecebedor,
                 AgenciaUsuarioPagador = data.AgenciaUsuarioPagador,
                 ContaUsuarioPagador = data.ContaUsuarioPagador,
+                DtExpiracaoInicio = data.DtExpiracaoInicio,
+                DtExpiracaoFim = data.DtExpiracaoFim,
                 Page = pagination.Page,
                 PageSize = pagination.PageSize
             };
@@ -119,17 +121,18 @@ namespace Pay.Recorrencia.Gestao.Api.Controllers
             }
         }
 
-        [HttpGet("{idSolicitacao}")]
+        [HttpGet]
         [SwaggerOperation(Summary = "Retorna todas as informações de uma solicitação")]
-        [SwaggerResponse(200, Type = typeof(TypedApiMetaDataPaginatedResponse<SolicitacaoRecorrencia>))]
+        [SwaggerResponse(200, Type = typeof(TypedApiMetaDataNonPaginatedResponse<SolicitacaoRecorrencia>))]
         [SwaggerResponse(404, Type = typeof(ErrorResponse))]
         [Produces("application/json")]
         [RequiredHeaders]
-        public async Task<ActionResult> GetDetalheSolicitacao(string idSolicitacao)
+        public async Task<ActionResult> GetDetalheSolicitacao([FromQuery] GetSolicAutorizacaoRecDTO data)
         {
             var request = new DetalhesSolicAutorizacaoRecRequest()
             {
-                IdSolicRecorrencia = idSolicitacao,
+                IdSolicRecorrencia = data.IdSolicRecorrencia,
+                IdRecorrencia = data.IdRecorrencia
             };
             try
             {
@@ -156,7 +159,7 @@ namespace Pay.Recorrencia.Gestao.Api.Controllers
         [SwaggerOperation(Summary = "Aprova a Autorização Recorrência", Description = "Aprova uma Autorização Recorrência.")]
         [SwaggerResponse(200, Type = typeof(AutorizacaoRecorrencia))]
         [SwaggerResponse(400)]
-        public async Task<ActionResult> AprovarAutorizacaoRecorrencia(AprovarSolicitacaoRecorrenciaCommand request)
+        public async Task<ActionResult> AprovarSolicitacaoAutorizacaoRecorrencia(AprovarSolicitacaoRecorrenciaCommand request)
         {
             MensagemPadraoResponse response;
             try

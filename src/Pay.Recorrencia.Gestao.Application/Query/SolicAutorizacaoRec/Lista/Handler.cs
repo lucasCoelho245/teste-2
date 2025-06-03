@@ -7,10 +7,10 @@ namespace Pay.Recorrencia.Gestao.Application.Query.SolicAutorizacaoRec.Lista
 {
     public class ListaSolicAutorizacaoRecHandler : IRequestHandler<ListaSolicAutorizacaoRecRequest, ListaSolicAutorizacaoRecResponse>
     {
-        private IMockSolicitacaoRecorrenciaRepository _repository { get; }
+        private ISolicitacaoRecorrenciaRepository _repository { get; }
 
         public ListaSolicAutorizacaoRecHandler(
-            IMockSolicitacaoRecorrenciaRepository repository)
+            ISolicitacaoRecorrenciaRepository repository)
         {
             _repository = repository;
         }
@@ -23,7 +23,7 @@ namespace Pay.Recorrencia.Gestao.Application.Query.SolicAutorizacaoRec.Lista
 
             var response = new ListaSolicAutorizacaoRecResponse()
             {
-                Status = "OK",
+                Status = "success",
                 StatusCode = 200,
                 Data = new ItemsData()
                 {

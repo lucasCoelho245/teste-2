@@ -8,6 +8,7 @@ namespace Pay.Recorrencia.Gestao.Domain.Repositories
         Task<SolicitacaoRecorrencia?> GetSolicitacaoRecorrencia(string id);
         Task Insert(SolicitacaoRecorrencia solicitacaoRecorrencia);
         Task Update(SolicitacaoAutorizacaoRecorrenciaUpdateDTO solicitacaoRecorrencia);
+        Task<string> CancelarSolicitacaoRecorrencia(SolicitacaoAutorizacaoRecorrenciaUpdateDTO solicitacaoRecorrencia);
         Task<ListaSolicAutorizacaoRecPaginada> GetAllAsync(GetListaSolicAutorizacaoRecDTOPaginada data);
         Task<SolicitacaoRecorrencia> GetById(string id);
         string ConsultarCodMunIBGE();

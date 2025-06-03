@@ -1,5 +1,4 @@
-﻿using System.Globalization;
-using AutoMapper;
+﻿using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -7,12 +6,14 @@ using Pay.Recorrencia.Gestao.Application.Commands.AlterarAutorizacaoRecorrencia;
 using Pay.Recorrencia.Gestao.Application.Commands.IncluirAutorizacaoRecorrencia;
 using Pay.Recorrencia.Gestao.Application.Commands.SolicitacaoRecorrencia;
 using Pay.Recorrencia.Gestao.Application.Interfaces;
+using Pay.Recorrencia.Gestao.Application.Query.SolicAutorizacaoRec.Detalhes;
 using Pay.Recorrencia.Gestao.Application.Response;
 using Pay.Recorrencia.Gestao.Application.Services;
 using Pay.Recorrencia.Gestao.Domain.Entities;
 using Pay.Recorrencia.Gestao.Domain.Helpers;
 using Pay.Recorrencia.Gestao.Domain.Repositories;
 using Pay.Recorrencia.Gestao.Domain.Services;
+using System.Globalization;
 using static Pay.Recorrencia.Gestao.Application.Commands.AprovarSolicitacaoRecorrencia.AprovarSolicitacaoRecorrenciaCommand;
 
 namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarSolicitacaoRecorrencia
@@ -49,12 +50,19 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarSolicitacaoRecorren
         public async Task<MensagemPadraoResponse> Handle(AprovarSolicitacaoRecorrenciaCommand request, CancellationToken cancellationToken)
         {
             DateTime DataAtual = DateTime.Now;
-            Domain.Entities.SolicitacaoRecorrencia solicitacaoRecorrenciaBanco = _solicitacaoRecorrenciaRepository.GetById(request.IdSolicRecorrencia).Result;
+
+            var objConsultaSolicitacaoAutorizacao = new DetalhesSolicAutorizacaoRecRequest()
+            {
+                IdSolicRecorrencia = request.IdSolicRecorrencia,
+            };
+
+            SolicAutorizacaoRecNonPagination solicitacaoRecorrenciaBanco = _solicitacaoRecorrenciaRepository.GetAsync(objConsultaSolicitacaoAutorizacao).Result;
+            
             if (solicitacaoRecorrenciaBanco == null)
                 return await Task.FromResult(new MensagemPadraoResponse(StatusCodes.Status400BadRequest, "ERRO-PIXAUTO-003", "Solicitação de recorrência não encontrada"));
             //AprovarSolicRecBanco aprovarSolicRecBanco = MapSolicitacaoToCommand(solicitacaoRecorrenciaBanco);
 
-            if (!ValidaSolicitacaoRecorrencia(solicitacaoRecorrenciaBanco, request)) //ARRUMAR
+            if (!ValidaSolicitacaoRecorrencia(solicitacaoRecorrenciaBanco.Data, request)) //ARRUMAR
                 return await Task.FromResult(new MensagemPadraoResponse(StatusCodes.Status400BadRequest, "ERRO-PIXAUTO-006", "Dados enviados pelo canal divergentes dos da tabela SOLICITACAO_AUTORIZACAO_RECORRENCIA"));
 
             var codMunIBGE = _solicitacaoRecorrenciaRepository.ConsultarCodMunIBGE();
@@ -64,13 +72,13 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarSolicitacaoRecorren
             if (responseInsertAutorizacao.StatusCode != StatusCodes.Status200OK)
                 return responseInsertAutorizacao;
 
-            var atualizarAutorizacaoCommand = ConverteParaAtualizarAutorizacaoRecorrencia(request, inserirAutorizacaoRecorrenciaCommand, DataAtual);
+            var atualizarAutorizacaoCommand = ConverteParaAtualizarAutorizacaoRecorrencia(request, inserirAutorizacaoRecorrenciaCommand, DataAtual, responseInsertAutorizacao.IdAutorizacaoResponse);
             var responseUpdateAutorizacao = await _atualizarAutorizacaoService.Handle(atualizarAutorizacaoCommand);
 
             if (responseUpdateAutorizacao.StatusCode != StatusCodes.Status200OK)
                 return responseUpdateAutorizacao;
 
-            var atualizarSolicitacaoRecorrenciaCommand = ConverteParaAtualizarSolicitacaoRecorrencia(request, inserirAutorizacaoRecorrenciaCommand.IdAutorizacao, DataAtual);
+            var atualizarSolicitacaoRecorrenciaCommand = ConverteParaAtualizarSolicitacaoRecorrencia(request, DataAtual, responseInsertAutorizacao.IdAutorizacaoResponse);
             var atualizarSolicitacaoRecorrencia = await _atualizarAutorizacaoRecorrenciaService.Handle(atualizarSolicitacaoRecorrenciaCommand);
             if (atualizarSolicitacaoRecorrencia.StatusCode != StatusCodes.Status200OK)
                 return atualizarSolicitacaoRecorrencia;
@@ -79,7 +87,7 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarSolicitacaoRecorren
             string idInformacaoStatus = IdInformacaoStatusGenerator.Gerar(ispb);
 
             // CENARIO 9 ENVIO DE EVENTO
-            ConfirmacaoAutorizacaoRecorrencia confirmacaoAutorizacaoRecorrencia = ConverteParaPostarConfirmacaoRecorrencia(request, codMunIBGE, solicitacaoRecorrenciaBanco, idInformacaoStatus);
+            ConfirmacaoAutorizacaoRecorrencia confirmacaoAutorizacaoRecorrencia = ConverteParaPostarConfirmacaoRecorrencia(request, codMunIBGE, solicitacaoRecorrenciaBanco.Data, idInformacaoStatus);
 
             var topic = _config.GetSection("Kafka:Producer:TopicList:AprovarAutorizacaoRecorrencia").Value;
             await _kafkaProducerService.SendObjectAsync(topic, confirmacaoAutorizacaoRecorrencia);
@@ -121,18 +129,18 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarSolicitacaoRecorren
             };
         }
 
-        private AtualizarSolicitacaoRecorrenciaCommand ConverteParaAtualizarSolicitacaoRecorrencia(AprovarSolicitacaoRecorrenciaCommand request, string idAutorizacao, DateTime dataAtual)
+        private AtualizarSolicitacaoRecorrenciaCommand ConverteParaAtualizarSolicitacaoRecorrencia(AprovarSolicitacaoRecorrenciaCommand request, DateTime dataAtual, string novoIdAutorizacao)
         {
             return new AtualizarSolicitacaoRecorrenciaCommand
             {
                 IdSolicRecorrencia = request.IdSolicRecorrencia,
-                IdAutorizacao = idAutorizacao,
+                IdAutorizacao = novoIdAutorizacao,
                 SituacaoSolicRecorrencia = "APRV",
                 DataUltimaAtualizacao = dataAtual, //timestamp da jornada 1, conferir.
             };
         }
 
-        private static ConfirmacaoAutorizacaoRecorrencia ConverteParaPostarConfirmacaoRecorrencia(AprovarSolicitacaoRecorrenciaCommand request, string codigoMunicipio, Domain.Entities.SolicitacaoRecorrencia solicitacaoRecorrencia, string idInformacaoStatus)
+        private static ConfirmacaoAutorizacaoRecorrencia ConverteParaPostarConfirmacaoRecorrencia(AprovarSolicitacaoRecorrenciaCommand request, string codigoMunicipio, Domain.Entities.SolicitacaoAutorizacaoRecorrenciaDetalhes solicitacaoRecorrencia, string idInformacaoStatus)
         {
             var dataFinalRecorrencia = "";
 
@@ -152,8 +160,8 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarSolicitacaoRecorren
                 CpfCnpjUsuarioRecebedor = solicitacaoRecorrencia.CpfCnpjUsuarioRecebedor,
                 ParticipanteDoUsuarioRecebedor = solicitacaoRecorrencia.ParticipanteDoUsuarioRecebedor,
                 CpfCnpjUsuarioPagador = solicitacaoRecorrencia.CpfCnpjUsuarioPagador,
-                ContaUsuarioPagador = solicitacaoRecorrencia.ContaUsuarioPagador,
-                AgenciaUsuarioPagador = solicitacaoRecorrencia.AgenciaUsuarioPagador,
+                ContaUsuarioPagador = solicitacaoRecorrencia.ContaUsuarioPagador.ToString(),
+                AgenciaUsuarioPagador = solicitacaoRecorrencia.AgenciaUsuarioPagador.ToString(),
                 ParticipanteDoUsuarioPagador = request.ParticipanteDoUsuarioRecebedor,
                 CodMunIBGE = codigoMunicipio,
                 NomeDevedor = solicitacaoRecorrencia.NomeDevedor,
@@ -170,16 +178,16 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarSolicitacaoRecorren
             return confirmacaoAutorizacaoRecorrencia;
         }
 
-        private AlterarAutorizacaoCommand ConverteParaAtualizarAutorizacaoRecorrencia(AprovarSolicitacaoRecorrenciaCommand request, InserirAutorizacaoRecorrenciaCommand inserirAutorizacaoRecorrencia, DateTime dataAtual)
+        private AlterarAutorizacaoCommand ConverteParaAtualizarAutorizacaoRecorrencia(AprovarSolicitacaoRecorrenciaCommand request, InserirAutorizacaoRecorrenciaCommand inserirAutorizacaoRecorrencia, DateTime dataAtual, string idAutorizacao)
         {
             return new AlterarAutorizacaoCommand
             {
-                IdAutorizacao = inserirAutorizacaoRecorrencia.IdAutorizacao,
+                IdAutorizacao = idAutorizacao,
                 IdRecorrencia = inserirAutorizacaoRecorrencia.IdRecorrencia,
                 TipoSituacaoRecorrencia = "AUT" + Convert.ToInt32(request.TpJornada),
-                SituacaoRecorrencia = "INPR",
                 DataHoraSituacaoRecorrencia = dataAtual,// timestamp da jornada 1, verificar!
                 //TipoRecorrencia = "RCUR",
+                SituacaoRecorrencia = "INPR",
                 TipoFrequencia = request.TipoFrequencia,
                 DataInicialAutorizacaoRecorrencia = dataAtual,
                 DataFinalAutorizacaoRecorrencia = request.DataFinalRecorrencia,
@@ -194,7 +202,6 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarSolicitacaoRecorren
         {
             var inserirAutorizacaoRecorrenciaCommand = new InserirAutorizacaoRecorrenciaCommand
             {
-                IdAutorizacao = GerarIdAutorizacao(), // DESCOBRIR SE É O DO BANCO / O QUE CHEGA NA REQUISICAO / OU ESSE MESMO.
                 IdRecorrencia = request.IdRecorrencia,
                 SituacaoRecorrencia = "PDNG",
                 TipoRecorrencia = "RCUR",
@@ -222,7 +229,8 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarSolicitacaoRecorren
                 DescObjetoContrato = request.DescObjetoContrato,
                 FlagPermiteNotificacao = true,
                 FlagValorMaximoAutorizado = request.ValorMaximoAutorizado != null ? true : false,
-                DataUltimaAtualizacao = request.DataUltimaAtualizacao
+                DataUltimaAtualizacao = request.DataUltimaAtualizacao,
+                TpRetentativa = "NAO_PERMITE"
             };
             return inserirAutorizacaoRecorrenciaCommand;
         }
@@ -250,14 +258,11 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarSolicitacaoRecorren
             return resultado;
         }
 
-        private bool ValidaSolicitacaoRecorrencia(Domain.Entities.SolicitacaoRecorrencia aprovarSolicRecBanco, AprovarSolicitacaoRecorrenciaCommand request)
+        private bool ValidaSolicitacaoRecorrencia(Domain.Entities.SolicitacaoAutorizacaoRecorrenciaDetalhes aprovarSolicRecBanco, AprovarSolicitacaoRecorrenciaCommand request)
         {
 
-            if (String.IsNullOrEmpty(aprovarSolicRecBanco.IdAutorizacao))
-                return false;
-
-            if (aprovarSolicRecBanco.IdSolicRecorrencia != request.IdSolicRecorrencia.ToString())
-                return false;
+            // if (aprovarSolicRecBanco.IdSolicRecorrencia != request.IdSolicRecorrencia.ToString())
+            //     return false;
 
             if (aprovarSolicRecBanco.TipoRecorrencia != request.TipoRecorrencia)
                 return false;
@@ -265,12 +270,12 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarSolicitacaoRecorren
             if (aprovarSolicRecBanco.TipoFrequencia != request.TipoFrequencia)
                 return false;
 
-            if (aprovarSolicRecBanco.DataInicialRecorrencia != request.DataInicialRecorrencia.ToString("MM/dd/yyyy HH:mm:ss"))
+            if (aprovarSolicRecBanco.DataInicialRecorrencia != request.DataInicialRecorrencia)
                 return false;
 
             if (request.DataFinalRecorrencia != null)
             {
-                if (aprovarSolicRecBanco.DataFinalRecorrencia != request.DataFinalRecorrencia.Value.ToString("MM/dd/yyyy HH:mm:ss"))
+                if (aprovarSolicRecBanco.DataFinalRecorrencia != request.DataFinalRecorrencia)
                     return false;
             }
 
@@ -280,9 +285,9 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarSolicitacaoRecorren
                     return false;
             }
 
-            if (request.CodigoMoedaSolicRecorr != null)
+            if (request.ValorFixoSolicRecorrencia != null)
             {
-                if (aprovarSolicRecBanco.ValorFixoSolicRecorrencia != request.ValorFixoSolicRecorrencia.Value.ToString(CultureInfo.InvariantCulture))
+                if (aprovarSolicRecBanco.ValorFixoSolicRecorrencia != request.ValorFixoSolicRecorrencia)
                     return false;
             }
 
@@ -294,7 +299,7 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarSolicitacaoRecorren
 
             if (request.ValorMinRecebedorSolicRecorr != null)
             {
-                if (aprovarSolicRecBanco.ValorMinRecebedorSolicRecorr != request.ValorMinRecebedorSolicRecorr.Value.ToString(CultureInfo.InvariantCulture))
+                if (aprovarSolicRecBanco.ValorMinRecebedorSolicRecorr != request.ValorMinRecebedorSolicRecorr)
                     return false;
             }
 
@@ -310,13 +315,13 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarSolicitacaoRecorren
             if (aprovarSolicRecBanco.CpfCnpjUsuarioPagador != request.CpfCnpjUsuarioPagador)
                 return false;
 
-            if (aprovarSolicRecBanco.ContaUsuarioPagador != request.ContaUsuarioPagador.ToString())
+            if (aprovarSolicRecBanco.ContaUsuarioPagador != request.ContaUsuarioPagador)
                 return false;
 
 
             if (request.AgenciaUsuarioPagador != null)
             {
-                if (aprovarSolicRecBanco.AgenciaUsuarioPagador != request.AgenciaUsuarioPagador.ToString())
+                if (aprovarSolicRecBanco.AgenciaUsuarioPagador != request.AgenciaUsuarioPagador)
                     return false;
             }
 
@@ -341,16 +346,16 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarSolicitacaoRecorren
                     return false;
             }
 
-            if (aprovarSolicRecBanco.DataHoraCriacaoRecorr != request.DataHoraCriacaoRecorr.ToString("MM/dd/yyyy HH:mm:ss"))
+            if (aprovarSolicRecBanco.DataHoraCriacaoRecorr != request.DataHoraCriacaoRecorr)
                 return false;
 
-            if (aprovarSolicRecBanco.DataHoraCriacaoSolicRecorr != request.DataHoraCriacaoSolicRecorr.ToString("MM/dd/yyyy HH:mm:ss"))
+            if (aprovarSolicRecBanco.DataHoraCriacaoSolicRecorr != request.DataHoraCriacaoSolicRecorr)
                 return false;
 
-            if (aprovarSolicRecBanco.DataHoraExpiracaoSolicRecorr != request.DataHoraExpiracaoSolicRecorr.ToString("MM/dd/yyyy HH:mm:ss"))
+            if (aprovarSolicRecBanco.DataHoraExpiracaoSolicRecorr != request.DataHoraExpiracaoSolicRecorr)
                 return false;
 
-            if (aprovarSolicRecBanco.DataUltimaAtualizacao != request.DataUltimaAtualizacao.ToString("MM/dd/yyyy HH:mm:ss"))
+            if (aprovarSolicRecBanco.DataUltimaAtualizacao != request.DataUltimaAtualizacao)
                 return false;
 
             if (aprovarSolicRecBanco.SituacaoSolicRecorrencia != "PDNG")

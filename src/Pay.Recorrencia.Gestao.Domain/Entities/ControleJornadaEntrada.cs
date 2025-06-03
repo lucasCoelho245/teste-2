@@ -4,7 +4,7 @@
     {
         public required string TpJornada { get; set; }
         public required string IdRecorrencia { get; set; }
-        public string? IdFimAFim { get; set; }
+        public string? IdE2E { get; set; }
         public string? IdConciliacaoRecebedor { get; set; }
         public string? SituacaoJornada { get; set; }
         public DateTime? DtAgendamento { get; set; }

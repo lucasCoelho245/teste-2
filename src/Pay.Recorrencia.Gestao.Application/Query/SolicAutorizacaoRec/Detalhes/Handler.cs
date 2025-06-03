@@ -1,17 +1,21 @@
 using MediatR;
+using AutoMapper;
 using Pay.Recorrencia.Gestao.Application.Response;
 using Pay.Recorrencia.Gestao.Domain.Repositories;
+using Pay.Recorrencia.Gestao.Domain.DTO;
 
 namespace Pay.Recorrencia.Gestao.Application.Query.SolicAutorizacaoRec.Detalhes
 {
     public class DetalhesSolicAutorizacaoRecHandler : IRequestHandler<DetalhesSolicAutorizacaoRecRequest, DetalhesSolicAutorizacaoRecResponse>
     {
-        private IMockSolicitacaoRecorrenciaRepository _repository { get; }
+        private ISolicitacaoRecorrenciaRepository _repository { get; }
+        private readonly IMapper _mapper;
 
         public DetalhesSolicAutorizacaoRecHandler(
-            IMockSolicitacaoRecorrenciaRepository repository)
+            ISolicitacaoRecorrenciaRepository repository, IMapper mapper)
         {
             _repository = repository;
+            _mapper = mapper;
         }
 
         public async Task<DetalhesSolicAutorizacaoRecResponse> Handle(DetalhesSolicAutorizacaoRecRequest request, CancellationToken cancellationToken)
@@ -20,11 +24,12 @@ namespace Pay.Recorrencia.Gestao.Application.Query.SolicAutorizacaoRec.Detalhes
 
             if(dataFinder.Data == null) throw new Exception("Nenhuma solicitacao encontrada para estes parâmetros de busca");
 
+            var data = _mapper.Map<SolicitacaoAutorizacaoRecorrenciaDetalhesDTO>(dataFinder.Data);
             var response = new DetalhesSolicAutorizacaoRecResponse()
             {
-                Status = "OK",
+                Status = "success",
                 StatusCode = 200,
-                Data = dataFinder.Data,
+                Data = data,
                 Message = "Operação realizada com sucesso"
             };
 

@@ -35,8 +35,8 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarSolicitacaoRecorren
         //[RegularExpression("PNDG|CCLD|CFDB", ErrorMessage = "O valor de SituacaoSolicRecorrencia deve ser um dos seguintes: PNDG, CCLD, CFDB.")]
         //public string? SituacaoSolicRecorrencia { get; set; }
 
-        //[RegularExpression("BRL", ErrorMessage = "O valor de CodigoMoedaSolicRecorr deve ser 'BRL'.")]
-        public string? CodigoMoedaSolicRecorr { get; set; }
+        [RegularExpression("BRL", ErrorMessage = "O valor de CodigoMoedaSolicRecorr deve ser 'BRL'.")]
+        public string? CodigoMoedaSolicRecorr { get; set; } = "BRL";
 
         public decimal? ValorFixoSolicRecorrencia { get; set; }
 
@@ -61,6 +61,7 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarSolicitacaoRecorren
 
         public int? AgenciaUsuarioPagador { get; set; }
 
+        [Required]
         public string ParticipanteDoUsuarioPagador { get; set; }
 
         public string? NomeDevedor { get; set; }
@@ -86,8 +87,14 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AprovarSolicitacaoRecorren
 
         public decimal? ValorMaximoAutorizado { get; set; }
 
+        [Required]
+        [Range(1, 4, ErrorMessage = "TpJornada deve estar entre 1 e 4.")]
         public TipoJornada TpJornada { get; set; }
 
+        public DateTime? DataProximoPagamento { get; set; }
+
+        public DateTime? DataAutorizacao { get; set; }
+        public DateTime? DataCancelamento { get; set; }
 
 
         public class AprovarSolicRecBanco : AprovarSolicitacaoRecorrenciaCommand

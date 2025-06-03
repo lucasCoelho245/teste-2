@@ -15,7 +15,9 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.SolicitacaoRecorrencia
         public string? SituacaoSolicRecorrencia { get; set; }
 
         [Required]
-        public DateTime DataUltimaAtualizacao { get; set; }   
+        public DateTime DataUltimaAtualizacao { get; set; }
+
+        public string CodigoSituacaoCancelamentoRecorrencia { get; set; }
     }
 }
 

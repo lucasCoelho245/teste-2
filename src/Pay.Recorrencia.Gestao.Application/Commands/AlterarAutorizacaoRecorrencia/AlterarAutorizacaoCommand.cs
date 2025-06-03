@@ -31,12 +31,14 @@ namespace Pay.Recorrencia.Gestao.Application.Commands.AlterarAutorizacaoRecorren
         public string? NumeroContrato { get; set; }
         public string? DescObjetoContrato { get; set; }
         public string? CodigoSituacaoCancelamentoRecorrencia { get; set; }  //Enum
-        public string TipoSituacaoRecorrencia { get; set; }  //Enum
+        public string? TipoSituacaoRecorrencia { get; set; }  //Enum
         public DateTime? DataHoraCriacaoRecorr { get; set; }
         public bool? FlagPermiteNotificacao { get; set; }
         public bool? FlagValorMaximoAutorizado { get; set; }
         public string? TpRetentativa { get; set; }  //Enum
         public DateTime? DataProximoPagamento { get; set; }
         public DateTime? DataHoraSituacaoRecorrencia { get; set; }
+        public DateTime? DataAutorizacao { get; set; }
+        public DateTime? DataCancelamento { get; set; }
     }
 }

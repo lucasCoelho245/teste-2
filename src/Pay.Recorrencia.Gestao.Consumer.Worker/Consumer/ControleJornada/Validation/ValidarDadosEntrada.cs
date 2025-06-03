@@ -56,7 +56,7 @@ namespace Pay.Recorrencia.Gestao.Consumer.Worker.Consumer.ControleJornada.Valida
         {
 
             var tiposComIdFimAFim = new[] { "Jornada 3", "Jornada 4", "AGNT", "NTAG", "RIFL" };
-            if (!tiposComIdFimAFim.Contains(dados.IdFimAFim))
+            if (!tiposComIdFimAFim.Contains(dados.IdE2E))
                 return "Valor inválido para IdFimAFim. Deve ser um dos valores permitidos.";
 
             var tiposComIdConciliacao = new[] { "AGND", "NTAG", "RIFL" };

@@ -49,32 +49,44 @@ namespace Pay.Recorrencia.Gestao.Application.Query.ControleJornada.Lista
 
         public async Task<ListaControleJornadaResponse> Handle(ListaControleJornadaAgendamentoAutorizacaoRequest request, CancellationToken cancellationToken)
         {
-            var dto = _mapper.Map<Domain.DTO.JornadaAutorizacaoAgendamentoDTO>(request);
-
-            var controleJornada = await _jornadaRepository.GetByAnyFilterAsync(dto);
-
-            bool statusBool = controleJornada.Items.Any();
-            string status = statusBool ? "OK" : "";
-
-            var response = new ListaControleJornadaResponse()
+            try 
             {
-                Status = status,
-                StatusCode = statusBool ? 200 : 404,
-                Data = new ItemsData()
-                {
-                    Items = controleJornada.Items,
-                    Pagination = new Pagination()
-                    {
-                        TotalItems = controleJornada.TotalItems,
-                        TotalPages = (int)Math.Ceiling((double)controleJornada.TotalItems / request.PageSize),
-                        PageSize = request.PageSize,
-                        CurrentPage = request.Page
-                    },
-                },
+                var dto = _mapper.Map<Domain.DTO.JornadaAutorizacaoAgendamentoDTO>(request);
 
-                Message = statusBool ? "" : "Nenhuma jornada encontrada"
-            };
-            return await Task.FromResult(response);
+                var controleJornada = await _jornadaRepository.GetByAnyFilterAsync(dto);
+
+                bool statusBool = controleJornada.Items.Any();
+                string status = statusBool ? "OK" : "";
+
+                var response = new ListaControleJornadaResponse()
+                {
+                    Status = status,
+                    StatusCode = statusBool ? 200 : 404,
+                    Data = new ItemsData()
+                    {
+                        Items = controleJornada.Items,
+                        Pagination = new Pagination()
+                        {
+                            TotalItems = controleJornada.TotalItems,
+                            TotalPages = (int)Math.Ceiling((double)controleJornada.TotalItems / request.PageSize),
+                            PageSize = request.PageSize,
+                            CurrentPage = request.Page
+                        },
+                    },
+
+                    Message = statusBool ? "" : "Nenhuma jornada encontrada"
+                };
+                return await Task.FromResult(response);
+            } catch (Exception ex)
+            {
+                return new ListaControleJornadaResponse()
+                {
+                    Status = "ERROR",
+                    StatusCode = 500,
+                    Data = null,
+                    Message = ex.Message
+                };
+            }
         }
     }
 }

@@ -96,9 +96,8 @@ public class JornadaRepository : IJornadaRepository
 
     public async Task<ListaJornadaPaginada<Jornada>> GetByAnyFilterAsync(JornadaAutorizacaoAgendamentoDTO request)
     {
-        var sql = @"SELECT * FROM dbo.Jornadas WHERE 1=1";
-        if (!string.IsNullOrEmpty(request.TpJornada))
-            sql += " AND TpJornada = @TpJornada";
+        var sql = @"SELECT * FROM dbo.Jornadas WHERE TpJornada = @tpJornada";
+
         if (!string.IsNullOrEmpty(request.IdRecorrencia))
             sql += " AND IdRecorrencia = @IdRecorrencia";
         if (!string.IsNullOrEmpty(request.IdE2E))
